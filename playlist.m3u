@@ -1,0 +1,7 @@
+#EXTM3U
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/iptv-org/iptv/master/logos/AnimaxAsia.png" group-title="Anime", Animax Asia (720p - Direct)
+http://122.53.222.9:9981/stream/channelid/870547344.ts
+
+#EXTINF:-1 tvg-logo="https://raw.githubusercontent.com/iptv-org/iptv/master/logos/AnimaxAsia.png" group-title="Anime", Animax Asia (1080p - India)
+https://amg02159-kcglobal-amg02159c1-samsung-in-521.playouts.now.amagi.tv/playlist/amg02159-kcglobal-animax-samsungin/playlist.m3u8
