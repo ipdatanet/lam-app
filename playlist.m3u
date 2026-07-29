@@ -1,8 +1,0 @@
-#EXTM3U x-tvg-url=""
-
-# ==========================================
-# Anime Channels
-# ==========================================
-
-#EXTINF:-1 tvg-id="" tvg-name="Animax India", Animax India
-https://animax-tv.cisarkia-48a.workers.dev/
