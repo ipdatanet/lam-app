@@ -148,8 +148,8 @@ html.dark .reciter-item.selected { color: var(--gold); }
 .reciter-avatar {
   width: 172px; height: 172px; border-radius: 50%; flex: none; position: relative;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 32% 28%, var(--gold-soft), var(--surface-2) 65%);
-  border: 1px solid var(--border); box-shadow: var(--shadow);
+  background: var(--avatar-bg, radial-gradient(circle at 32% 28%, var(--gold-soft), var(--surface-2) 65%));
+  border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden;
   transition: box-shadow .3s ease;
 }
 .reciter-avatar::before {
@@ -164,6 +164,7 @@ html.dark .reciter-item.selected { color: var(--gold); }
 }
 .reciter-avatar svg { width: 74px; height: 74px; color: var(--primary); }
 html.dark .reciter-avatar svg { color: var(--gold); }
+.avatar-initial { font-size: 64px; font-weight: 800; color: #fff; line-height: 1; user-select: none; }
 .eq-bars { position: absolute; bottom: 20px; display: flex; align-items: flex-end; gap: 4px; height: 20px; }
 .eq-bars span { width: 4px; border-radius: 2px; background: var(--primary); height: 6px; }
 html.dark .eq-bars span { background: var(--gold); }
@@ -177,24 +178,45 @@ html.dark .eq-bars span { background: var(--gold); }
 html.dark .player-surah-name { color: var(--gold); }
 .player-reciter-name { font-size: 15px; font-weight: 600; color: var(--text); margin: 0; }
 
+.player-bar {
+  flex: none; width: 100%; max-width: 420px; margin: 0 auto;
+  padding: 10px 22px max(16px, env(safe-area-inset-bottom));
+}
+.progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.time-lbl { font-size: 11px; color: var(--text-muted); flex: none; min-width: 34px; text-align: center; direction: ltr; }
+.progress-slider {
+  flex: 1; appearance: none; -webkit-appearance: none; height: 4px; border-radius: 999px;
+  background: linear-gradient(to left, var(--primary) var(--pct, 0%), var(--border) var(--pct, 0%));
+  cursor: pointer; outline: none;
+}
+html.dark .progress-slider { background: linear-gradient(to left, var(--gold) var(--pct, 0%), var(--border) var(--pct, 0%)); }
+.progress-slider::-webkit-slider-thumb {
+  appearance: none; -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--primary); border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
+}
+html.dark .progress-slider::-webkit-slider-thumb { background: var(--gold); }
+.progress-slider::-moz-range-thumb {
+  width: 13px; height: 13px; border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); cursor: pointer;
+}
+
 .controls-bar {
-  flex: none; display: flex; align-items: center; justify-content: center; gap: 14px;
-  padding: 10px 0 max(22px, env(safe-area-inset-bottom));
+  flex: none; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 4px 0 0;
 }
 .ctrl-btn {
-  width: 44px; height: 44px; border-radius: 50%; flex: none;
+  width: 36px; height: 36px; border-radius: 50%; flex: none;
   background: var(--surface); border: 1px solid var(--border); color: var(--text);
   display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow);
 }
-.ctrl-btn svg { width: 18px; height: 18px; }
+.ctrl-btn svg { width: 15px; height: 15px; }
 .ctrl-btn.active { background: var(--gold-soft); border-color: var(--gold); color: var(--primary); }
 html.dark .ctrl-btn.active { color: var(--gold); }
 .play-fab {
-  width: 58px; height: 58px; border-radius: 50%; flex: none;
+  width: 46px; height: 46px; border-radius: 50%; flex: none;
   background: var(--primary); color: #fff; border: none;
   display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(20,83,45,.4); cursor: pointer;
 }
-.play-fab svg { width: 22px; height: 22px; }
+.play-fab svg { width: 18px; height: 18px; }
 .play-fab.playing { background: var(--gold); box-shadow: 0 8px 20px rgba(184,134,11,.4); }
 
 .back-btn {
@@ -273,20 +295,27 @@ html.dark .back-btn { color: #fff; }
     <p class="player-reciter-name" id="playerReciterName">—</p>
   </div>
 
-  <div class="controls-bar" id="controlsBar">
-    <button class="ctrl-btn" id="repeatBtn" aria-label="تكرار السورة">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-    </button>
-    <button class="ctrl-btn" id="prevAyahBtn" aria-label="السورة السابقة">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM18 6l-8.5 6L18 18V6z"/></svg>
-    </button>
-    <button class="play-fab" id="playBtn" aria-label="تشغيل التلاوة">
-      <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-    </button>
-    <button class="ctrl-btn" id="nextAyahBtn" aria-label="السورة التالية">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18V6z"/></svg>
-    </button>
+  <div class="player-bar">
+    <div class="progress-row">
+      <span class="time-lbl" id="timeCurrent">٠:٠٠</span>
+      <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0" step="0.1">
+      <span class="time-lbl" id="timeTotal">٠:٠٠</span>
+    </div>
+    <div class="controls-bar" id="controlsBar">
+      <button class="ctrl-btn" id="repeatBtn" aria-label="تكرار السورة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </button>
+      <button class="ctrl-btn" id="prevAyahBtn" aria-label="السورة السابقة">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zM18 6l-8.5 6L18 18V6z"/></svg>
+      </button>
+      <button class="play-fab" id="playBtn" aria-label="تشغيل التلاوة">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <button class="ctrl-btn" id="nextAyahBtn" aria-label="السورة التالية">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18V6z"/></svg>
+      </button>
+    </div>
   </div>
 
   <audio id="audioEl" preload="auto"></audio>
@@ -816,6 +845,7 @@ function playSurah(surahId) {
   audioEl.dataset.surah = String(surahId);
   audioEl.dataset.reciter = Settings.reciterId;
   updateNowPlayingUI(surahId);
+  resetProgressUI();
 
   if (navigator.onLine === false) {
     playFromCacheOrNotify(url);
@@ -901,26 +931,85 @@ audioEl.addEventListener("ended", () => {
   else setPlayingUI(false);
 });
 
-/* ---------- تهيئة شاشة الاستماع عند اختيار سورة: تعرض صورة القارئ فورًا ---------- */
+/* ---------- صورة/رمز القارئ: تُعرض فور الانتقال لشاشة الاستماع.
+   إن توفّر رابط صورة حقيقية (reciter.img) تُعرض مباشرة، وإلا يُعرض
+   رمز مميّز خاص بكل قارئ (حرفه الأول بلون فريد يُشتق من اسمه) بدل رمز
+   عام واحد يتكرر لكل القرّاء. */
+function reciterColor(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  const hue = hash % 360;
+  return `linear-gradient(135deg, hsl(${hue} 55% 38%), hsl(${(hue + 40) % 360} 60% 26%))`;
+}
 function renderReciterPhoto() {
   const reciter = RECITERS.find(r => r.id === Settings.reciterId) || RECITERS[0];
   const wrap = document.getElementById("reciterAvatar");
   const img = document.getElementById("reciterPhotoImg");
   const iconWrap = document.getElementById("reciterIconWrap");
+  wrap.style.setProperty("--avatar-bg", "");
   if (reciter.img) {
     img.src = reciter.img;
     img.style.display = "block";
     iconWrap.style.display = "none";
-    img.onerror = () => { img.style.display = "none"; iconWrap.style.display = "flex"; };
+    img.onerror = () => {
+      img.style.display = "none";
+      showInitialAvatar(reciter, wrap, iconWrap);
+    };
   } else {
     img.style.display = "none";
-    iconWrap.style.display = "flex";
+    showInitialAvatar(reciter, wrap, iconWrap);
   }
 }
+function showInitialAvatar(reciter, wrap, iconWrap) {
+  wrap.style.setProperty("--avatar-bg", reciterColor(reciter.id));
+  iconWrap.style.display = "flex";
+  iconWrap.innerHTML = `<span class="avatar-initial">${reciter.name.trim().charAt(0)}</span>`;
+}
+
+/* ---------- شريط التقدّم ---------- */
+const progressSlider = document.getElementById("progressSlider");
+const timeCurrentLbl = document.getElementById("timeCurrent");
+const timeTotalLbl = document.getElementById("timeTotal");
+function formatTime(sec) {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return toArabicDigits(m) + ":" + toArabicDigits(String(s).padStart(2, "0"));
+}
+function resetProgressUI() {
+  progressSlider.value = 0;
+  progressSlider.style.setProperty("--pct", "0%");
+  timeCurrentLbl.textContent = "٠:٠٠";
+  timeTotalLbl.textContent = "٠:٠٠";
+}
+let _seeking = false;
+audioEl.addEventListener("loadedmetadata", () => {
+  progressSlider.max = audioEl.duration || 0;
+  timeTotalLbl.textContent = formatTime(audioEl.duration);
+});
+audioEl.addEventListener("timeupdate", () => {
+  if (_seeking) return;
+  progressSlider.max = audioEl.duration || 0;
+  progressSlider.value = audioEl.currentTime || 0;
+  const pct = audioEl.duration ? (audioEl.currentTime / audioEl.duration) * 100 : 0;
+  progressSlider.style.setProperty("--pct", pct + "%");
+  timeCurrentLbl.textContent = formatTime(audioEl.currentTime);
+});
+progressSlider.addEventListener("input", () => {
+  _seeking = true;
+  const pct = progressSlider.max ? (progressSlider.value / progressSlider.max) * 100 : 0;
+  progressSlider.style.setProperty("--pct", pct + "%");
+  timeCurrentLbl.textContent = formatTime(progressSlider.value);
+});
+progressSlider.addEventListener("change", () => {
+  audioEl.currentTime = parseFloat(progressSlider.value) || 0;
+  _seeking = false;
+});
 
 async function initPlayer(surah) {
   document.getElementById("playerReciterName").textContent = currentReciterName();
   document.getElementById("playerSurahName").textContent = "سورة " + toArabicDigits(surah);
+  resetProgressUI();
   renderReciterPhoto();
   try {
     const idx = await getQuranIndex();
