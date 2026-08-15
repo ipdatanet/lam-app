@@ -193,18 +193,18 @@
   .qcf-lines{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;}
   .qcf-line{
     direction:rtl;unicode-bidi:bidi-override;text-align:center;
-    line-height:1.5;margin:0 auto;white-space:normal;overflow:visible;
-    word-break:keep-all;max-width:100%;
+    line-height:1.5;margin:0 auto;white-space:nowrap;overflow:visible;
+    max-width:100%;font-size:var(--mushaf-size);
   }
-  .qcf-line.qcf-line-center{margin:6px auto;}
+  .qcf-line.qcf-line-center{margin:6px auto;font-size:calc(var(--mushaf-size) * 1.15);}
   .qcf-word{
-    font-size:var(--mushaf-size);color:var(--text-main);cursor:pointer;
+    font-size:inherit;color:var(--text-main);cursor:pointer;
     border-radius:6px;transition:background .2s ease;padding:0 1px;
   }
   .qcf-word:hover{background:var(--parchment-2);}
   .qcf-word.playing{background:var(--gold-soft);color:#2b2308;}
   html.night .qcf-word.playing{background:#5a4a1c;color:#f5e6b0;}
-  .qcf-line-center .qcf-word{font-size:calc(var(--mushaf-size) * 1.15);cursor:default;}
+  .qcf-line-center .qcf-word{cursor:default;}
 
   /* ---------- Settings drawer ---------- */
   .overlay{
@@ -733,6 +733,24 @@ function renderQcfPages(pages){
 
   box.innerHTML = html;
   state.currentAyahs = ayahs;
+  fitLinesToWidth(box);
+}
+
+// Shrinks each Mushaf line's font-size just enough that it fits on one row
+// without wrapping or overflowing (QCF lines are designed to span a full
+// printed page width, which rarely matches a phone screen at a fixed size).
+function fitLinesToWidth(container){
+  const baseSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mushaf-size")) || 22;
+  container.querySelectorAll(".qcf-line:not(.qcf-line-center)").forEach(line=>{
+    let size = baseSize;
+    line.style.fontSize = size + "px";
+    let guard = 0;
+    while(line.scrollWidth > line.clientWidth && size > 10 && guard < 40){
+      size -= 0.5;
+      line.style.fontSize = size + "px";
+      guard++;
+    }
+  });
 }
 
 let audioBarHideTimer = null;
