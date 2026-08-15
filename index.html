@@ -26,7 +26,7 @@
     --line:#e2d6b0;
     --shadow: 0 10px 30px rgba(14,59,54,.10);
     --radius:16px;
-    --mushaf-size:30px;
+    --mushaf-size:22px;
     --mushaf-line:2.35;
     color-scheme: light;
   }
@@ -174,8 +174,7 @@
   .ab-btn.active{background:var(--gold);color:#2b2308;border-color:var(--gold);}
 
   .mushaf{
-    background:var(--card);margin:16px 14px;border-radius:var(--radius);
-    border:1px solid var(--line);box-shadow:var(--shadow);
+    background:var(--card);width:100%;
     display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
     scroll-behavior:smooth;
@@ -183,8 +182,8 @@
   .mushaf > .load-msg, .mushaf > .empty-msg{flex:0 0 100%;width:100%;}
   .qcf-page{
     flex:0 0 100%;width:100%;box-sizing:border-box;scroll-snap-align:start;
-    padding:26px 22px 34px;display:flex;flex-direction:column;justify-content:center;
-    min-height:60vh;
+    padding:22px 16px 26px;display:flex;flex-direction:column;justify-content:center;
+    min-height:calc(100vh - 200px);
   }
   .qcf-page-num{
     text-align:center;font-size:11px;color:var(--text-muted);margin:0 0 14px;
@@ -193,9 +192,10 @@
   .qcf-page-num::before, .qcf-page-num::after{content:"—";color:var(--gold);margin:0 8px;opacity:.6;}
   .qcf-line{
     direction:rtl;text-align:center;
-    line-height:2.05;margin:0 auto;white-space:nowrap;overflow:hidden;
+    line-height:2.1;margin:0 auto;white-space:normal;overflow:visible;
+    word-break:keep-all;
   }
-  .qcf-line.qcf-line-center{white-space:normal;margin:10px auto;}
+  .qcf-line.qcf-line-center{margin:10px auto;}
   .qcf-word{
     font-size:var(--mushaf-size);color:var(--text-main);cursor:pointer;
     border-radius:6px;transition:background .2s ease;padding:0 1px;
@@ -302,11 +302,6 @@
     <div class="field">
       <label>القارئ</label>
       <select id="reciterSelect"></select>
-    </div>
-
-    <div class="field">
-      <label>حجم الخط: <span id="fontSizeLabel">30</span></label>
-      <input id="fontSizeRange" type="range" min="20" max="46" value="30">
     </div>
 
     <div class="field row-between">
@@ -466,7 +461,6 @@ let state = {
   qcfIndex:null,
   qcfVerses:null,
   reciter: storage.get("qm_reciter") || RECITERS[0].id,
-  fontSize: parseInt(storage.get("qm_fontsize")||"30",10),
   night: storage.get("qm_night") === "1",
   currentMode: null,      // 'surah' | 'juz'
   currentNumber: null,
@@ -504,7 +498,6 @@ function ayahAudioUrl(reciterId, surahNo, ayahNo){
 
 function applyTheme(){
   document.documentElement.classList.toggle("night", state.night);
-  document.documentElement.style.setProperty("--mushaf-size", state.fontSize+"px");
 }
 
 function cacheKey(mode, number){ return `qm_cache_v2_${mode}_${number}`; }
@@ -523,7 +516,7 @@ function showReader(){
   $("#homeView").classList.add("hidden");
   $("#readerView").classList.remove("hidden");
   $("#backBtn").classList.remove("hidden");
-  $("#audioBar").classList.remove("hidden");
+  $("#audioBar").classList.add("hidden");
   window.scrollTo({top:0});
 }
 
@@ -740,9 +733,21 @@ function renderQcfPages(pages){
   state.currentAyahs = ayahs;
 }
 
+let audioBarHideTimer = null;
+function showAudioBar(){
+  $("#audioBar").classList.remove("hidden");
+  clearTimeout(audioBarHideTimer);
+  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 3500);
+}
+
 function onMushafClick(e){
   const el = e.target.closest(".qcf-word[data-verse]");
-  if(!el) return;
+  if(!el){
+    // tapped empty space on the page: just toggle the bar
+    $("#audioBar").classList.contains("hidden") ? showAudioBar() : (clearTimeout(audioBarHideTimer), $("#audioBar").classList.add("hidden"));
+    return;
+  }
+  showAudioBar();
   const key = el.dataset.verse;
   const idx = state.currentAyahs.findIndex(a=>a.key===key);
   if(idx>=0) playFromIndex(idx);
@@ -766,6 +771,7 @@ function playFromIndex(idx){
   highlightPlaying(idx);
   state.isPlaying = true;
   $("#playPauseBtn").textContent = "❚❚";
+  showAudioBar();
 }
 
 function highlightPlaying(idx){
@@ -945,19 +951,6 @@ function populateReciterSelect(){
   });
 }
 
-function initFontSize(){
-  const range = $("#fontSizeRange");
-  range.value = state.fontSize;
-  $("#fontSizeLabel").textContent = toArabicDigits(state.fontSize);
-  applyTheme();
-  range.addEventListener("input", ()=>{
-    state.fontSize = parseInt(range.value,10);
-    $("#fontSizeLabel").textContent = toArabicDigits(state.fontSize);
-    storage.set("qm_fontsize", state.fontSize);
-    applyTheme();
-  });
-}
-
 function initNightMode(){
   const sw = $("#nightModeToggle");
   sw.classList.toggle("on", state.night);
@@ -984,7 +977,6 @@ function init(){
   applyTheme();
   registerQcfFonts();
   populateReciterSelect();
-  initFontSize();
   initNightMode();
   updateReciterTag();
   renderJuzGrid();
