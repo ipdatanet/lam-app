@@ -26,7 +26,7 @@
     --line:#e2d6b0;
     --shadow: 0 10px 30px rgba(14,59,54,.10);
     --radius:16px;
-    --mushaf-size:22px;
+    --mushaf-size:26px;
     --mushaf-line:2.35;
     color-scheme: light;
   }
@@ -190,13 +190,13 @@
     font-family:'Tajawal',sans-serif;
   }
   .qcf-page-num::before, .qcf-page-num::after{content:"—";color:var(--gold);margin:0 8px;opacity:.6;}
-  .qcf-lines{flex:1;display:flex;flex-direction:column;justify-content:space-evenly;}
+  .qcf-lines{display:flex;flex-direction:column;justify-content:flex-start;}
   .qcf-line{
     direction:rtl;unicode-bidi:bidi-override;text-align:center;
-    line-height:1.5;margin:0 auto;white-space:nowrap;overflow:visible;
+    line-height:1.85;margin:0 auto;white-space:nowrap;overflow:visible;
     max-width:100%;font-size:var(--mushaf-size);
   }
-  .qcf-line.qcf-line-center{margin:6px auto;font-size:calc(var(--mushaf-size) * 1.15);}
+  .qcf-line.qcf-line-center{margin:4px auto;font-size:calc(var(--mushaf-size) * 1.15);}
   .qcf-word{
     font-size:inherit;color:var(--text-main);cursor:pointer;
     border-radius:6px;transition:background .2s ease;padding:0 1px;
@@ -736,21 +736,25 @@ function renderQcfPages(pages){
   fitLinesToWidth(box);
 }
 
-// Shrinks each Mushaf line's font-size just enough that it fits on one row
-// without wrapping or overflowing (QCF lines are designed to span a full
-// printed page width, which rarely matches a phone screen at a fixed size).
+// Finds the single largest font-size (starting from --mushaf-size) at which
+// every Mushaf line fits on one row without wrapping, and applies it
+// uniformly to all lines — keeping consistent letter size and spacing across
+// the whole page, matching real Mushaf typesetting, instead of shrinking
+// each line independently (which would look inconsistent line to line).
 function fitLinesToWidth(container){
-  const baseSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mushaf-size")) || 22;
-  container.querySelectorAll(".qcf-line:not(.qcf-line-center)").forEach(line=>{
-    let size = baseSize;
-    line.style.fontSize = size + "px";
-    let guard = 0;
-    while(line.scrollWidth > line.clientWidth && size > 10 && guard < 40){
-      size -= 0.5;
-      line.style.fontSize = size + "px";
-      guard++;
-    }
-  });
+  const baseSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mushaf-size")) || 26;
+  const lines = Array.from(container.querySelectorAll(".qcf-line:not(.qcf-line-center)"));
+  if(!lines.length) return;
+  let size = baseSize;
+  lines.forEach(l=>{ l.style.fontSize = size + "px"; });
+  let guard = 0;
+  while(size > 10 && guard < 40){
+    const overflow = lines.some(l=>l.scrollWidth > l.clientWidth + 0.5);
+    if(!overflow) break;
+    size -= 0.5;
+    lines.forEach(l=>{ l.style.fontSize = size + "px"; });
+    guard++;
+  }
 }
 
 let audioBarHideTimer = null;
