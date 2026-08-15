@@ -383,21 +383,24 @@ const QCF_MIRRORS = [
 ];
 const QCF_FONT_CDN = "https://cdn.jsdelivr.net/gh/MohamadHajjRabee/quran-qcf4@main/fonts-woff2";
 
-// Tries each mirror in turn (jsDelivr first, then GitHub raw) so a hiccup
-// or rate-limit on one CDN doesn't break the whole app.
 async function fetchQcfJson(path){
-  let lastErr;
+  const errors = [];
   for(const base of QCF_MIRRORS){
     try{
-      const res = await fetch(`${base}/${path}`, {cache:"force-cache"});
-      if(!res.ok) throw new Error(`HTTP ${res.status} on ${base}/${path}`);
+      const res = await fetch(`${base}/${path}`);
+      if(!res.ok){
+        errors.push(`${base}: HTTP ${res.status}`);
+        continue;
+      }
       return await res.json();
     }catch(e){
-      lastErr = e;
+      errors.push(`${base}: ${e.message || e}`);
       console.warn("QCF fetch failed, trying next mirror:", base, path, e);
     }
   }
-  throw lastErr;
+  const err = new Error(`تعذّر جلب ${path} — ${errors.join(" | ")}`);
+  err.details = errors;
+  throw err;
 }
 const QCF_HAFS_FONT_COUNT = 47;
 
@@ -500,7 +503,7 @@ function applyTheme(){
   document.documentElement.style.setProperty("--mushaf-size", state.fontSize+"px");
 }
 
-function cacheKey(mode, number){ return `qm_cache_${mode}_${number}`; }
+function cacheKey(mode, number){ return `qm_cache_v2_${mode}_${number}`; }
 
 /* ================= NAVIGATION ================= */
 
@@ -661,11 +664,23 @@ async function openReader(mode, number){
     }
 
     const ck = cacheKey(mode, number);
-    let pages;
+    let pages = null;
     const cachedRaw = storage.get(ck);
     if(cachedRaw){
-      pages = JSON.parse(cachedRaw).pages;
-    } else {
+      try{
+        const parsed = JSON.parse(cachedRaw);
+        if(Array.isArray(parsed.pages) && parsed.pages.length && parsed.pages[0] && Array.isArray(parsed.pages[0].lines)){
+          pages = parsed.pages;
+        } else {
+          throw new Error("stale cache shape");
+        }
+      }catch(e){
+        console.warn("Discarding incompatible cached entry:", ck, e);
+        storage.remove(ck);
+        pages = null;
+      }
+    }
+    if(!pages){
       const nums = [];
       for(let p=pageStart;p<=pageEnd;p++) nums.push(p);
       pages = await Promise.all(nums.map(p=>fetchQcfJson(`pages/${pad3(p)}.json`)));
@@ -682,6 +697,7 @@ async function openReader(mode, number){
       <div class="empty-msg">
         تعذّر تحميل صفحات المصحف. تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.
         <br><button id="retryOpenBtn" class="drawer-btn" style="margin-top:14px;max-width:220px;margin-inline:auto;">إعادة المحاولة</button>
+        <div style="margin-top:14px;font-size:11px;color:var(--text-muted);direction:ltr;text-align:center;word-break:break-word;">${(err && err.message) ? err.message : String(err)}</div>
       </div>`;
     const retryBtn = document.getElementById("retryOpenBtn");
     if(retryBtn) retryBtn.addEventListener("click", ()=>openReader(mode, number));
