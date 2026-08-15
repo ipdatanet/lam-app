@@ -341,8 +341,8 @@ const storage = {
     catch(e){ return Object.prototype.hasOwnProperty.call(memoryStore,key) ? memoryStore[key] : null; }
   },
   set(key, val){
-    try{ window.localStorage.setItem(key, val); }
-    catch(e){ memoryStore[key] = val; }
+    try{ window.localStorage.setItem(key, val); return true; }
+    catch(e){ memoryStore[key] = val; return false; }
   },
   remove(key){
     try{ window.localStorage.removeItem(key); }
@@ -470,7 +470,8 @@ let state = {
   currentTitle:"",
   playIndex: -1,
   isPlaying:false,
-  repeat:false
+  repeat:false,
+  fittedSize:null
 };
 
 /* ================= HELPERS ================= */
@@ -736,25 +737,28 @@ function renderQcfPages(pages){
   fitLinesToWidth(box);
 }
 
-// Finds the single largest font-size (starting from --mushaf-size) at which
-// every Mushaf line fits on one row without wrapping, and applies it
-// uniformly to all lines — keeping consistent letter size and spacing across
-// the whole page, matching real Mushaf typesetting, instead of shrinking
-// each line independently (which would look inconsistent line to line).
+// Finds the single largest font-size at which every currently-rendered line
+// fits on one row without wrapping, and applies it uniformly. The result is
+// cached in state.fittedSize and reused (never grown back up) across every
+// subsequent surah/juz opened this session — otherwise a short page (like
+// Al-Fatihah) would render bigger than a dense page (like early Al-Baqarah)
+// just because it happened to be measured in a different batch, which looked
+// inconsistent between pages.
 function fitLinesToWidth(container){
   const baseSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mushaf-size")) || 26;
   const lines = Array.from(container.querySelectorAll(".qcf-line:not(.qcf-line-center)"));
   if(!lines.length) return;
-  let size = baseSize;
+  let size = state.fittedSize || baseSize;
   lines.forEach(l=>{ l.style.fontSize = size + "px"; });
   let guard = 0;
-  while(size > 10 && guard < 40){
+  while(size > 10 && guard < 60){
     const overflow = lines.some(l=>l.scrollWidth > l.clientWidth + 0.5);
     if(!overflow) break;
     size -= 0.5;
     lines.forEach(l=>{ l.style.fontSize = size + "px"; });
     guard++;
   }
+  state.fittedSize = size;
 }
 
 let audioBarHideTimer = null;
@@ -804,7 +808,10 @@ function highlightPlaying(idx){
   if(!a) return;
   const els = document.querySelectorAll(`.qcf-word[data-verse="${a.key}"]`);
   els.forEach(el=>el.classList.add("playing"));
-  if(els[0]) els[0].scrollIntoView({behavior:"smooth", block:"center"});
+  if(els[0]){
+    const pageEl = els[0].closest(".qcf-page");
+    if(pageEl) pageEl.scrollIntoView({behavior:"smooth", inline:"start", block:"nearest"});
+  }
 }
 
 audioEl.addEventListener("ended", ()=>{
@@ -892,10 +899,16 @@ function cacheCurrentForOffline(){
   if(!state.currentPages.length){ toast("افتح سورة أولًا"); return; }
   try{
     const ck = cacheKey(state.currentMode, state.currentNumber);
-    storage.set(ck, JSON.stringify({pages:state.currentPages, title:state.currentTitle}));
-    toast("تم حفظ الصفحات للقراءة بدون إنترنت");
+    const payload = JSON.stringify({pages:state.currentPages, title:state.currentTitle});
+    const ok = storage.set(ck, payload);
+    if(ok){
+      toast("تم حفظ الصفحات للقراءة بدون إنترنت");
+    } else {
+      toast("تعذّر الحفظ — مساحة التخزين في المتصفح ممتلئة. جرّب حفظ سورة أقصر");
+    }
   }catch(e){
-    toast("تعذّر الحفظ — مساحة التخزين ممتلئة");
+    console.error("cacheCurrentForOffline failed:", e);
+    toast("تعذّر حفظ الصفحات");
   }
 }
 
