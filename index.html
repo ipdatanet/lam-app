@@ -14,7 +14,7 @@
 <meta name="application-name" content="القرآن المبين">
 <meta name="description" content="تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت">
 
-<!-- ربط ملف الـ Manifest الرسمي -->
+<!-- ربط ملف الـ Manifest -->
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="./icon-192.png">
@@ -67,50 +67,6 @@
   #app{min-height:100vh;display:flex;flex-direction:column;}
   a,button{font-family:inherit;}
   button{cursor:pointer;border:none;background:none;color:inherit;}
-
-  /* ---------- Splash Screen الأزرق المتطابق مع الشعار ---------- */
-  #splashScreen{
-    position:fixed;
-    inset:0;
-    z-index:9999;
-    background:#00a3ff;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    transition:opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.45s ease;
-  }
-  #splashScreen.fade-out{
-    opacity:0;
-    visibility:hidden;
-    pointer-events:none;
-  }
-  .splash-content{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:18px;
-    animation:splashAnim 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .splash-logo{
-    width:clamp(180px, 52vw, 260px);
-    height:clamp(180px, 52vw, 260px);
-    border-radius:36px;
-    box-shadow:0 16px 45px rgba(0, 50, 90, 0.28);
-    object-fit:cover;
-  }
-  .splash-title{
-    color:#ffffff;
-    font-size:26px;
-    font-weight:800;
-    margin:0;
-    letter-spacing:.5px;
-    text-shadow:0 2px 10px rgba(0,0,0,0.15);
-  }
-  @keyframes splashAnim{
-    0%{transform:scale(0.82);opacity:0;}
-    100%{transform:scale(1);opacity:1;}
-  }
 
   /* ---------- Header ---------- */
   header{
@@ -393,14 +349,6 @@
 </head>
 <body>
 <div id="app">
-
-  <!-- Splash Screen -->
-  <div id="splashScreen">
-    <div class="splash-content">
-      <img src="./icon-512.png" alt="القرآن المبين" class="splash-logo" onerror="this.src='./icon-192.png'">
-      <h1 class="splash-title">القرآن المبين</h1>
-    </div>
-  </div>
 
   <header>
     <div class="header-inner">
@@ -1042,7 +990,7 @@ function onMushafClick(e){
   if(idx>=0) playFromIndex(idx);
 }
 
-/* ================= AUDIO PLAYBACK (Seamless Transitions) ================= */
+/* ================= AUDIO PLAYBACK ================= */
 const audioEl = $("#audioPlayer");
 
 async function playFromIndex(idx){
@@ -1345,7 +1293,7 @@ $("#clearCacheBtn").addEventListener("click", async ()=>{
   toast("تم مسح البيانات المحفوظة");
 });
 
-/* ================= INIT & SPLASH SCREEN ================= */
+/* ================= INIT ================= */
 async function init(){
   applyTheme();
   await registerQcfFonts();
@@ -1359,20 +1307,10 @@ async function init(){
   if(navigator.storage && navigator.storage.persist){
     navigator.storage.persist().catch(()=>{});
   }
-
-  // إخفاء الشاشة الافتتاحية بسلاسة
-  setTimeout(()=>{
-    const splash = document.getElementById("splashScreen");
-    if(splash){
-      splash.classList.add("fade-out");
-      setTimeout(()=>splash.remove(), 500);
-    }
-  }, 1000);
 }
 
 init();
 
-// تسجيل Service Worker لـ PWABuilder
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
     navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch((err)=>{
@@ -1383,4 +1321,4 @@ if("serviceWorker" in navigator){
 })();
 </script>
 </body>
-</html>
+        </html>
