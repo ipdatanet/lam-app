@@ -165,7 +165,7 @@
   #readerView{
     width:100%;
     margin:0 auto;
-    padding:0 0 80px;
+    padding:0 0 20px;
     flex:1;
     display:flex;
     flex-direction:column;
@@ -177,6 +177,7 @@
     box-shadow:0 -6px 22px rgba(0,0,0,.14);
     display:flex;align-items:center;justify-content:center;gap:16px;
     padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    transition:transform .25s ease, opacity .25s ease;
   }
   .ab-btn{
     width:44px;height:44px;border-radius:50%;
@@ -338,6 +339,34 @@
   .pc-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:10.5px;font-weight:800;color:var(--text-main);}
 
+  /* ---------- Custom Modal (نافذة الحذف والتأكيد المخصصة بدون رابط) ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.65);
+    z-index:90;backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .modal-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    max-width:380px;width:100%;
+    padding:22px 18px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+    text-align:center;
+    animation:modalPop .24s cubic-bezier(0.16,1,0.3,1);
+  }
+  @keyframes modalPop{from{transform:scale(0.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .modal-title{font-weight:800;font-size:17px;color:var(--text-main);margin-bottom:10px;}
+  .modal-body{font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal-btn{
+    flex:1;padding:11px;border-radius:10px;font-size:14px;font-weight:700;
+    transition:background 0.15s ease;
+  }
+  .modal-btn.confirm{background:var(--ink);color:var(--gold-soft);border:1px solid var(--ink);}
+  .modal-btn.cancel{background:var(--parchment-2);color:var(--text-main);border:1px solid var(--line);}
+
   /* ---------- Toast ---------- */
   .toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
@@ -385,6 +414,7 @@
     </div>
   </main>
 
+  <!-- شريط التحكم بالصوت (مخفي افتراضياً ولا يظهر إلا عند الضغط على الشاشة) -->
   <div id="audioBar" class="audio-bar hidden">
     <button id="repeatBtn" class="ab-btn" title="تكرار الآية">🔁</button>
     <button id="nextBtn" class="ab-btn" title="الآية التالية">⏭</button>
@@ -432,6 +462,18 @@
       <button id="clearCacheBtn" class="drawer-btn danger">🗑 مسح كل البيانات المحفوظة في الجهاز</button>
     </div>
   </aside>
+
+  <!-- نافذة التأكيد المخصصة -->
+  <div id="confirmModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-title" id="modalTitle">تأكيد</div>
+      <div class="modal-body" id="modalMessage"></div>
+      <div class="modal-actions">
+        <button id="modalConfirmBtn" class="modal-btn confirm">حسناً</button>
+        <button id="modalCancelBtn" class="modal-btn cancel">إلغاء</button>
+      </div>
+    </div>
+  </div>
 
   <audio id="audioPlayer" preload="none"></audio>
   <div id="toast" class="toast hidden"></div>
@@ -521,6 +563,28 @@ async function idbClear(storeName){
   }catch(e){ return false; }
 }
 
+/* ================= CUSTOM MODAL CONFIRMATION (بدون رابط المتصفح) ================= */
+function customConfirm(message, title="تأكيد الإجراء"){
+  return new Promise((resolve)=>{
+    const modal = $("#confirmModal");
+    $("#modalTitle").textContent = title;
+    $("#modalMessage").textContent = message;
+    modal.classList.remove("hidden");
+
+    const onConfirm = ()=>{ cleanup(); resolve(true); };
+    const onCancel = ()=>{ cleanup(); resolve(false); };
+
+    function cleanup(){
+      modal.classList.add("hidden");
+      $("#modalConfirmBtn").removeEventListener("click", onConfirm);
+      $("#modalCancelBtn").removeEventListener("click", onCancel);
+    }
+
+    $("#modalConfirmBtn").addEventListener("click", onConfirm);
+    $("#modalCancelBtn").addEventListener("click", onCancel);
+  });
+}
+
 /* ================= DATA ================= */
 const RECITERS = [
   {id:"Alafasy_128kbps", name:"مشاري راشد العفاسي"},
@@ -542,7 +606,7 @@ const RECITERS = [
 const JUZ_COUNT = 30;
 const QCF_MIRRORS = [
   "https://cdn.jsdelivr.net/gh/MohamadHajjRabee/quran-qcf4@main",
-  "https://raw.githubusercontent.com/MohamadHajjRabee/quran-qcf4@main"
+  "https://raw.githubusercontent.com/MohamadHajjRabee/quran-qcf4/main"
 ];
 const QCF_FONT_CDN = "https://cdn.jsdelivr.net/gh/MohamadHajjRabee/quran-qcf4@main/fonts-woff2";
 
@@ -685,7 +749,7 @@ function showReader(){
   $("#appTitle").classList.add("hidden");
   $("#settingsBtn").classList.add("hidden");
   $("#bookmarkBtn").classList.remove("hidden");
-  $("#audioBar").classList.add("hidden");
+  $("#audioBar").classList.add("hidden"); /* مخفي عند الفتح */
   window.scrollTo({top:0});
 }
 
@@ -975,12 +1039,13 @@ let audioBarHideTimer = null;
 function showAudioBar(){
   $("#audioBar").classList.remove("hidden");
   clearTimeout(audioBarHideTimer);
-  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 3500);
+  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 4000);
 }
 
 function onMushafClick(e){
   const el = e.target.closest(".qcf-word[data-verse]");
   if(!el){
+    // الضغط في أي مكان فارغ بالشاشة يظهر أو يخفي شريط الصوت
     $("#audioBar").classList.contains("hidden") ? showAudioBar() : (clearTimeout(audioBarHideTimer), $("#audioBar").classList.add("hidden"));
     return;
   }
@@ -990,7 +1055,7 @@ function onMushafClick(e){
   if(idx>=0) playFromIndex(idx);
 }
 
-/* ================= AUDIO PLAYBACK (Seamless Transitions) ================= */
+/* ================= AUDIO PLAYBACK ================= */
 const audioEl = $("#audioPlayer");
 
 async function playFromIndex(idx){
@@ -1082,6 +1147,7 @@ $("#playPauseBtn").addEventListener("click", ()=>{
     audioEl.play();
     state.isPlaying = true;
     $("#playPauseBtn").textContent = "❚❚";
+    showAudioBar();
   } else {
     playFromIndex(0);
   }
@@ -1202,7 +1268,10 @@ $("#downloadAllPagesBtn").addEventListener("click", async ()=>{
   const circle = $("#pagesCircle");
   const ready = await openIDB().then(()=>true).catch(()=>false);
   if(!ready){ toast("التخزين غير متاح في هذا المتصفح"); return; }
-  if(!confirm("سيتم تنزيل الخطوط وجميع صفحات المصحف (٦٠٤ صفحة) لتعمل بدون إنترنت بالكامل. متابعة؟")) return;
+  
+  const ok = await customConfirm("سيتم تنزيل الخطوط وجميع صفحات المصحف (٦٠٤ صفحة) لتعمل بدون إنترنت بالكامل. متابعة؟", "تنزيل كامل المصحف");
+  if(!ok) return;
+
   btn.disabled = true;
   circle.classList.add("show");
   setCircleProgress("pagesRing","pagesLabel",0);
@@ -1222,7 +1291,10 @@ $("#downloadAllAudioBtn").addEventListener("click", async ()=>{
   const ready = await openIDB().then(()=>true).catch(()=>false);
   if(!ready){ toast("التخزين غير متاح في هذا المتصفح"); return; }
   const rname = (RECITERS.find(r=>r.id===state.reciter)||{}).name || state.reciter;
-  if(!confirm(`سيتم تنزيل صوت القارئ (${rname}) لكل آيات القرآن (٦٢٣٦ آية) للاستماع بدون نت. متابعة؟`)) return;
+  
+  const ok = await customConfirm(`سيتم تنزيل صوت القارئ (${rname}) لكل آيات القرآن (٦٢٣٦ آية) للاستماع بدون نت. متابعة؟`, "تنزيل صوت القارئ");
+  if(!ok) return;
+
   btn.disabled = true;
   circle.classList.add("show");
   setCircleProgress("audioRing","audioLabel",0);
@@ -1278,7 +1350,9 @@ function initNightMode(){
 }
 
 $("#clearCacheBtn").addEventListener("click", async ()=>{
-  if(!confirm("سيتم حذف جميع الصفحات والأصوات والخطوط المحفوظة بدون إنترنت. متابعة؟")) return;
+  const ok = await customConfirm("سيتم حذف جميع الصفحات والأصوات والخطوط المحفوظة بدون إنترنت من هذا الجهاز. متابعة؟", "مسح البيانات");
+  if(!ok) return;
+
   storage.keys().forEach(k=>{
     if(k.startsWith("qm_cache_") || k.startsWith("qm_qcf_")) storage.remove(k);
   });
