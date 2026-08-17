@@ -414,7 +414,7 @@
     </div>
   </main>
 
-  <!-- شريط التحكم بالصوت (مخفي افتراضياً ولا يظهر إلا عند الضغط على الشاشة) -->
+  <!-- شريط التحكم بالصوت (مخفي افتراضياً ولا يظهر إلا عند لمس الشاشة يدوياً) -->
   <div id="audioBar" class="audio-bar hidden">
     <button id="repeatBtn" class="ab-btn" title="تكرار الآية">🔁</button>
     <button id="nextBtn" class="ab-btn" title="الآية التالية">⏭</button>
@@ -749,7 +749,7 @@ function showReader(){
   $("#appTitle").classList.add("hidden");
   $("#settingsBtn").classList.add("hidden");
   $("#bookmarkBtn").classList.remove("hidden");
-  $("#audioBar").classList.add("hidden"); /* مخفي عند الفتح */
+  $("#audioBar").classList.add("hidden");
   window.scrollTo({top:0});
 }
 
@@ -1039,20 +1039,31 @@ let audioBarHideTimer = null;
 function showAudioBar(){
   $("#audioBar").classList.remove("hidden");
   clearTimeout(audioBarHideTimer);
-  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 4000);
+  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 3200);
+}
+function hideAudioBar(){
+  clearTimeout(audioBarHideTimer);
+  $("#audioBar").classList.add("hidden");
 }
 
 function onMushafClick(e){
   const el = e.target.closest(".qcf-word[data-verse]");
   if(!el){
     // الضغط في أي مكان فارغ بالشاشة يظهر أو يخفي شريط الصوت
-    $("#audioBar").classList.contains("hidden") ? showAudioBar() : (clearTimeout(audioBarHideTimer), $("#audioBar").classList.add("hidden"));
+    if($("#audioBar").classList.contains("hidden")){
+      showAudioBar();
+    } else {
+      hideAudioBar();
+    }
     return;
   }
-  showAudioBar();
+  // عند الضغط المباشر على آية لبدء تشغيلها يظهر الشريط مؤقتاً
   const key = el.dataset.verse;
   const idx = state.currentAyahs.findIndex(a=>a.key===key);
-  if(idx>=0) playFromIndex(idx);
+  if(idx>=0){
+    playFromIndex(idx);
+    showAudioBar();
+  }
 }
 
 /* ================= AUDIO PLAYBACK ================= */
@@ -1080,7 +1091,7 @@ async function playFromIndex(idx){
   highlightPlaying(idx);
   state.isPlaying = true;
   $("#playPauseBtn").textContent = "❚❚";
-  showAudioBar();
+  // لن يظهر شريط الصوت تلقائياً هنا أثناء القراءة المستمرة
 }
 
 function highlightPlaying(idx){
@@ -1150,6 +1161,7 @@ $("#playPauseBtn").addEventListener("click", ()=>{
     showAudioBar();
   } else {
     playFromIndex(0);
+    showAudioBar();
   }
 });
 
@@ -1157,8 +1169,10 @@ $("#nextBtn").addEventListener("click", ()=>{
   if(!state.currentAyahs.length) return;
   if(state.playIndex + 1 < state.currentAyahs.length){
     playFromIndex(state.playIndex + 1);
+    showAudioBar();
   } else if(state.currentMode === "surah" && state.currentNumber < 114){
     openReader("surah", state.currentNumber + 1).then(()=>playFromIndex(0));
+    showAudioBar();
   } else {
     toast("هذه آخر آية");
   }
@@ -1168,12 +1182,15 @@ $("#prevBtn").addEventListener("click", ()=>{
   if(!state.currentAyahs.length) return;
   if(state.playIndex > 0){
     playFromIndex(state.playIndex - 1);
+    showAudioBar();
   } else if(state.currentMode === "surah" && state.currentNumber > 1){
     openReader("surah", state.currentNumber - 1).then(()=>{
       playFromIndex(state.currentAyahs.length - 1);
+      showAudioBar();
     });
   } else if(state.playIndex === 0){
     playFromIndex(0);
+    showAudioBar();
   } else {
     toast("افتح آية أولًا");
   }
@@ -1183,6 +1200,7 @@ $("#repeatBtn").addEventListener("click", ()=>{
   state.repeat = !state.repeat;
   $("#repeatBtn").classList.toggle("active", state.repeat);
   toast(state.repeat ? "تكرار الآية: مفعّل" : "تكرار الآية: متوقف");
+  showAudioBar();
 });
 
 /* ================= OFFLINE DOWNLOADS ================= */
