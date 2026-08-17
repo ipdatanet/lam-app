@@ -542,7 +542,7 @@ const RECITERS = [
 const JUZ_COUNT = 30;
 const QCF_MIRRORS = [
   "https://cdn.jsdelivr.net/gh/MohamadHajjRabee/quran-qcf4@main",
-  "https://raw.githubusercontent.com/MohamadHajjRabee/quran-qcf4/main"
+  "https://raw.githubusercontent.com/MohamadHajjRabee/quran-qcf4@main"
 ];
 const QCF_FONT_CDN = "https://cdn.jsdelivr.net/gh/MohamadHajjRabee/quran-qcf4@main/fonts-woff2";
 
@@ -990,7 +990,7 @@ function onMushafClick(e){
   if(idx>=0) playFromIndex(idx);
 }
 
-/* ================= AUDIO PLAYBACK ================= */
+/* ================= AUDIO PLAYBACK (Seamless Transitions) ================= */
 const audioEl = $("#audioPlayer");
 
 async function playFromIndex(idx){
@@ -1311,6 +1311,7 @@ async function init(){
 
 init();
 
+// تسجيل Service Worker لـ PWABuilder
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
     navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch((err)=>{
@@ -1321,4 +1322,4 @@ if("serviceWorker" in navigator){
 })();
 </script>
 </body>
-        </html>
+</html>
