@@ -1,51 +1,86 @@
 <?php
 /**
- * ==========================================
- * إعدادات المستودع (قم بتعديل هذه البيانات فقط)
- * ==========================================
+ * ==================================================================
+ *  إعدادات المستودع (يكفي فقط وضع اسم حسابك واسم المستودع)
+ * ==================================================================
  */
-$github_user = "اسم_المستخدم_هنا";   // مثال: Octocat
-$github_repo = "اسم_المستودع_هنا";    // مثال: MyAwesomeApp
-$app_title   = "تطبيقي الرائع";       // اسم التطبيق الذي سيظهر للزوار
+$github_user = "اسم_المستخدم";   // مثال: username
+$github_repo = "اسم_المستودع";    // مثال: my-android-app
 
-// جلب بيانات آخر إصدار من GitHub API عبر PHP
-$api_url = "https://api.github.com/repos/{$github_user}/{$github_repo}/releases/latest";
+// دالة مساعدة لطلب بيانات GitHub API
+function fetchGithub($url) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'User-Agent: APK-Auto-Discovery-App',
+        'Accept: application/vnd.github.v3+json'
+    ]);
+    $res = curl_exec($ch);
+    curl_close($ch);
+    return json_decode($res, true);
+}
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $api_url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-// GitHub يتطلب إرسال User-Agent
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'User-Agent: PHP-GitHub-App-Downloader',
-    'Accept: application/vnd.github.v3+json'
-]);
-
-$response = curl_exec($ch);
-curl_close($ch);
-
-$release_data = json_decode($response, true);
-
-// استخراج رابط الـ APK ومعلومات الإصدار
-$apk_url       = "#";
-$apk_size      = "غير معروف";
-$version_tag   = "v1.0.0";
-$release_notes = "لا توجد تفاصيل لهذا الإصدار.";
+// المتغيرات الافتراضية
+$app_name       = "تطبيق أندرويد";
+$version_tag    = "أحدث إصدار";
+$apk_url        = "";
+$apk_size       = "غير معروف";
+$release_notes  = "";
+$updated_date   = "مؤخراً";
 $download_count = 0;
-$found_apk     = false;
+$found_apk      = false;
 
-if ($release_data && !isset($release_data['message'])) {
-    $version_tag   = $release_data['tag_name'] ?? 'v1.0.0';
-    $release_notes = nl2br(htmlspecialchars($release_data['body'] ?? ''));
+// 1. محاولة جلب آخر إصدار (Release)
+$release = fetchGithub("https://api.github.com/repos/{$github_user}/{$github_repo}/releases/latest");
 
-    // البحث داخل المرفقات (assets) عن ملف ينتهي بـ .apk
-    if (!empty($release_data['assets'])) {
-        foreach ($release_data['assets'] as $asset) {
+if ($release && !isset($release['message'])) {
+    if (!empty($release['assets'])) {
+        foreach ($release['assets'] as $asset) {
             if (pathinfo($asset['name'], PATHINFO_EXTENSION) === 'apk') {
                 $apk_url        = $asset['browser_download_url'];
                 $apk_size       = round($asset['size'] / (1024 * 1024), 2) . ' MB';
+                $version_tag    = $release['tag_name'];
                 $download_count = $asset['download_count'];
+                $updated_date   = date("Y/m/d - H:i", strtotime($asset['updated_at']));
+                $release_notes  = trim($release['body'] ?? '');
+                
+                // استخراج اسم التطبيق من عنوان الإصدار أو اسم الملف
+                $clean_filename = pathinfo($asset['name'], PATHINFO_FILENAME);
+                $app_name       = !empty($release['name']) ? $release['name'] : ucwords(str_replace(['-', '_', 'app'], ' ', $clean_filename));
+                
                 $found_apk      = true;
+                break;
+            }
+        }
+    }
+}
+
+// 2. إذا لم يجد في Releases، يبحث داخل شجرة ملفات المستودع مباشرة (Fallback)
+if (!$found_apk) {
+    $tree = fetchGithub("https://api.github.com/repos/{$github_user}/{$github_repo}/git/trees/main?recursive=1");
+    if (isset($tree['message'])) { // تجربة فرع master إذا فشل main
+        $tree = fetchGithub("https://api.github.com/repos/{$github_user}/{$github_repo}/git/trees/master?recursive=1");
+    }
+
+    if (!empty($tree['tree'])) {
+        foreach ($tree['tree'] as $file) {
+            if (pathinfo($file['path'], PATHINFO_EXTENSION) === 'apk') {
+                $branch = isset($tree['sha']) ? 'main' : 'master';
+                $apk_url   = "https://raw.githubusercontent.com/{$github_user}/{$github_repo}/{$branch}/" . $file['path'];
+                $apk_size  = round($file['size'] / (1024 * 1024), 2) . ' MB';
+                
+                $raw_name  = pathinfo($file['path'], PATHINFO_FILENAME);
+                $app_name  = ucwords(str_replace(['-', '_', 'app'], ' ', $raw_name));
+                
+                // محاولة استخراج رقم الإصدار من اسم الملف (مثال: app-v1.2.3.apk)
+                if (preg_match('/v?([0-9]+(\.[0-9]+)+)/i', $raw_name, $matches)) {
+                    $version_tag = 'v' . $matches[1];
+                }
+                
+                $updated_date = "متزامن مع المستودع";
+                $found_apk    = true;
                 break;
             }
         }
@@ -57,22 +92,22 @@ if ($release_data && !isset($release_data['message'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحميل تطبيق <?= htmlspecialchars($app_title); ?> - APK</title>
+    <title><?= htmlspecialchars($app_name); ?> - تحميل مباشر APK</title>
     <!-- خط تجوال من Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- أيقونات FontAwesome -->
+    <!-- FontAwesome للأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary: #2563eb;       /* أزرق أساسي */
-            --primary-dark: #1d4ed8;  /* أزرق داكن */
-            --primary-light: #eff6ff; /* أزرق فاتح جداً */
-            --text-main: #1e293b;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #eff6ff;
+            --text-main: #0f172a;
             --text-muted: #64748b;
             --bg-white: #ffffff;
-            --bg-body: #f8fafc;
-            --border-color: #e2e8f0;
+            --bg-body: #f1f5f9;
+            --border: #e2e8f0;
         }
 
         * {
@@ -93,118 +128,137 @@ if ($release_data && !isset($release_data['message'])) {
             padding: 20px;
         }
 
-        .container {
+        .card {
             width: 100%;
-            max-width: 550px;
+            max-width: 520px;
             background: var(--bg-white);
-            border-radius: 24px;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1), 0 8px 10px -6px rgba(37, 99, 235, 0.1);
+            border-radius: 28px;
+            box-shadow: 0 20px 40px -15px rgba(37, 99, 235, 0.12);
             overflow: hidden;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.5s ease-out;
         }
 
-        /* الرأس العلوي */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* الرأس الأزرق */
         .card-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            padding: 40px 20px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            padding: 40px 20px 35px;
             text-align: center;
-            color: var(--bg-white);
+            color: #ffffff;
             position: relative;
         }
 
-        .app-icon-wrapper {
+        .app-icon {
             width: 90px;
             height: 90px;
-            background: var(--bg-white);
+            background: #ffffff;
             color: var(--primary);
-            border-radius: 20px;
+            border-radius: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 15px auto;
-            font-size: 45px;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 16px;
+            font-size: 46px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .app-icon:hover {
+            transform: scale(1.05) rotate(5deg);
         }
 
         .app-title {
             font-size: 24px;
             font-weight: 800;
-            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
         }
 
-        .app-badge {
-            display: inline-block;
+        .badge-version {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 50px;
+            padding: 5px 14px;
+            border-radius: 30px;
             font-size: 13px;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
+            font-weight: 600;
+            backdrop-filter: blur(8px);
         }
 
         /* جسم البطاقة */
         .card-body {
-            padding: 30px 25px;
+            padding: 30px 24px;
         }
 
-        .info-grid {
+        /* شبكة المعلومات */
+        .grid-info {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 25px;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .info-card {
+        .info-box {
             background: var(--primary-light);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
             border: 1px solid #dbeafe;
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
         }
 
-        .info-card i {
+        .info-box i {
             color: var(--primary);
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 6px;
         }
 
-        .info-card .label {
+        .info-box .title {
             font-size: 12px;
             color: var(--text-muted);
             display: block;
+            margin-bottom: 2px;
         }
 
-        .info-card .value {
+        .info-box .value {
             font-size: 15px;
             font-weight: 700;
             color: var(--primary-dark);
         }
 
-        /* الملاحظات والتغييرات */
-        .changelog {
+        /* سجل التغييرات */
+        .changelog-box {
             background: #f8fafc;
-            border: 1px dashed var(--border-color);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 25px;
-            max-height: 120px;
-            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
             font-size: 13px;
             line-height: 1.6;
-            color: var(--text-muted);
         }
 
-        .changelog-title {
+        .changelog-header {
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        /* زر التحميل الرئيسي */
+        .changelog-content {
+            color: var(--text-muted);
+            max-height: 100px;
+            overflow-y: auto;
+            white-space: pre-line;
+        }
+
+        /* زر التحميل */
         .btn-download {
             display: flex;
             align-items: center;
@@ -215,25 +269,25 @@ if ($release_data && !isset($release_data['message'])) {
             color: #ffffff;
             text-decoration: none;
             padding: 16px;
-            border-radius: 14px;
+            border-radius: 16px;
             font-size: 18px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
+            cursor: pointer;
         }
 
         .btn-download:hover {
             background: var(--primary-dark);
-            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.45);
             transform: translateY(-2px);
         }
 
         .btn-disabled {
             background: #94a3b8;
-            cursor: not-allowed;
             box-shadow: none;
+            cursor: not-allowed;
         }
 
         .btn-disabled:hover {
@@ -241,95 +295,95 @@ if ($release_data && !isset($release_data['message'])) {
             transform: none;
         }
 
-        /* شريط الحماية */
-        .secure-badge {
+        /* شارة الأمان */
+        .security-badge {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: 12px;
+            gap: 8px;
             color: #16a34a;
-            margin-top: 15px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 18px;
         }
 
-        /* التذييل */
         .footer {
             margin-top: 20px;
             text-align: center;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-muted);
         }
 
         .footer a {
             color: var(--primary);
             text-decoration: none;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="card">
         <!-- الرأس -->
         <div class="card-header">
-            <div class="app-icon-wrapper">
+            <div class="app-icon">
                 <i class="fa-brands fa-android"></i>
             </div>
-            <h1 class="app-title"><?= htmlspecialchars($app_title); ?></h1>
-            <span class="app-badge">
-                <i class="fa-solid fa-code-branch"></i> <?= htmlspecialchars($version_tag); ?>
-            </span>
+            <h1 class="app-title"><?= htmlspecialchars($app_name); ?></h1>
+            <div class="badge-version">
+                <i class="fa-solid fa-tag"></i> <?= htmlspecialchars($version_tag); ?>
+            </div>
         </div>
 
-        <!-- المحتوى -->
+        <!-- المحتوى الداخلي -->
         <div class="card-body">
-            <!-- شبكة المعلومات -->
-            <div class="info-grid">
-                <div class="info-card">
-                    <i class="fa-solid fa-file-zipper"></i>
-                    <span class="label">حجم الملف</span>
+            <!-- تفاصيل الملف التلقائية -->
+            <div class="grid-info">
+                <div class="info-box">
+                    <i class="fa-solid fa-hard-drive"></i>
+                    <span class="title">حجم التطبيق</span>
                     <span class="value"><?= $apk_size; ?></span>
                 </div>
-                <div class="info-card">
-                    <i class="fa-solid fa-download"></i>
-                    <span class="label">مرات التحميل</span>
-                    <span class="value"><?= number_format($download_count); ?></span>
+                <div class="info-box">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span class="title">تاريخ التحديث</span>
+                    <span class="value"><?= $updated_date; ?></span>
                 </div>
             </div>
 
-            <!-- سجل التحديثات -->
+            <!-- ملاحظات الإصدار التلقائية (إن وجدت) -->
             <?php if (!empty($release_notes)): ?>
-            <div class="changelog">
-                <div class="changelog-title">
-                    <i class="fa-solid fa-bullhorn text-primary"></i> ما الجديد في هذا الإصدار:
+            <div class="changelog-box">
+                <div class="changelog-header">
+                    <i class="fa-solid fa-bolt text-primary"></i> مميزات التحديث الأخير:
                 </div>
-                <div><?= $release_notes; ?></div>
+                <div class="changelog-content"><?= htmlspecialchars($release_notes); ?></div>
             </div>
             <?php endif; ?>
 
-            <!-- زر التحميل -->
+            <!-- زر التحميل المباشر -->
             <?php if ($found_apk): ?>
-                <a href="<?= $apk_url; ?>" class="btn-download" id="downloadBtn">
+                <a href="<?= htmlspecialchars($apk_url); ?>" class="btn-download" id="downloadBtn">
                     <i class="fa-solid fa-cloud-arrow-down"></i>
-                    <span>تحميل التطبيق (APK)</span>
+                    <span>تحميل التطبيق الآن (APK)</span>
                 </a>
             <?php else: ?>
                 <button class="btn-download btn-disabled" disabled>
                     <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>لم يتم العثور على ملف APK في المستودع</span>
+                    <span>لم يتم العثور على ملف APK بعد</span>
                 </button>
             <?php endif; ?>
 
-            <!-- علامة الأمان -->
-            <div class="secure-badge">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>ملف آمن ومفحوص تم جلبه مباشرة من GitHub Releases</span>
+            <div class="security-badge">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>تم التعرف على الملف الأصلي والتحقق من أمانه</span>
             </div>
         </div>
     </div>
 
+    <!-- تذييل الصفحة -->
     <div class="footer">
-        مستضاف عبر المستودع: 
+        المصدر: 
         <a href="https://github.com/<?= htmlspecialchars($github_user . '/' . $github_repo); ?>" target="_blank">
             <i class="fa-brands fa-github"></i> <?= htmlspecialchars($github_user . '/' . $github_repo); ?>
         </a>
@@ -339,18 +393,14 @@ if ($release_data && !isset($release_data['message'])) {
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('downloadBtn');
-            
             if (btn) {
-                btn.addEventListener('click', function(e) {
-                    const originalText = this.innerHTML;
-                    
-                    // تغيير نص الزر عند الضغط للتفاعل مع المستخدم
-                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري بدء التحميل...';
+                btn.addEventListener('click', function() {
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري تنزيل الملف...';
                     this.style.pointerEvents = 'none';
 
-                    // إعادة الزر لشكله الطبيعي بعد 4 ثوانٍ
                     setTimeout(() => {
-                        this.innerHTML = originalText;
+                        this.innerHTML = originalHTML;
                         this.style.pointerEvents = 'auto';
                     }, 4000);
                 });
