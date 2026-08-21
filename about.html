@@ -1,24 +1,80 @@
 <?php
 /**
- * ==========================================================
- * ضع رابط المستودع الخاص بك هنا فقط (أو اسم المستخدم والمستودع)
- * ==========================================================
+ * =====================================================================
+ *  ضع رابط ملف الـ APK الخاص بمستودعك هنا فقط (أي نوع رابط من GitHub)
+ * =====================================================================
+ * أمثلة على الروابط المدعومة:
+ * 1) رابط من Releases: "https://github.com/user/repo/releases/download/v1.2.0/My_App.apk"
+ * 2) رابط ملف عادي:    "https://github.com/user/repo/blob/main/app-release.apk"
+ * 3) رابط Raw مباشر:    "https://raw.githubusercontent.com/user/repo/main/app.apk"
  */
-$github_username = "اسم_المستخدم_هنا"; // مثال: octocat
-$github_repo     = "اسم_المستودع_هنا";  // مثال: my-app
-$app_title       = "تطبيقي الذكي";      // اسم افتراضي (يتغير تلقائياً إذا وجد اسماً)
+$apk_link = "https://ai2a.appinventor.mit.edu/b/vu2f";
 
-// تنظيف المدخلات
-$github_username = trim($github_username);
-$github_repo     = trim($github_repo);
+// =================== معالجة الرابط تلقائياً ===================
+$app_name     = "تطبيق غير معروف";
+$version_tag  = "v1.0.0";
+$file_size    = "جاهز للتحميل";
+$direct_url   = "#";
+$original_file = "";
+$is_valid     = false;
+
+$apk_link = trim($apk_link);
+
+if (!empty($apk_link) && $apk_link !== "ضع_رابط_الملف_هنا") {
+    $is_valid = true;
+
+    // 1. تحويل روابط blob العادية إلى روابط Raw قابلة للتحميل المباشر
+    if (strpos($apk_link, 'github.com') !== false && strpos($apk_link, '/blob/') !== false) {
+        $direct_url = str_replace(['github.com', '/blob/'], ['raw.githubusercontent.com', '/'], $apk_link);
+    } else {
+        $direct_url = $apk_link;
+    }
+
+    // 2. استخراج اسم الملف الأصلي
+    $parsed_path   = parse_url($direct_url, PHP_URL_PATH);
+    $original_file = basename($parsed_path); // مثال: "My_Application-v2.1.apk"
+    $clean_name    = pathinfo($original_file, PATHINFO_FILENAME);
+
+    // 3. استخراج رقم الإصدار تلقائياً (من مسار Releases أو اسم الملف)
+    if (preg_match('/\/download\/([^\/]+)\//i', $apk_link, $v_match)) {
+        $version_tag = $v_match[1];
+    } elseif (preg_match('/v?([0-9]+(\.[0-9]+)+)/i', $original_file, $v_match)) {
+        $version_tag = 'v' . $v_match[1];
+    }
+
+    // 4. تنظيف وتوليد اسم التطبيق تلقائياً
+    $clean_name = preg_replace('/[-_]?v?[0-9]+(\.[0-9]+)+/i', '', $clean_name); // إزالة رقم الإصدار من الاسم
+    $clean_name = trim(str_replace(['-', '_', '.'], ' ', $clean_name));
+    if (!empty($clean_name)) {
+        $app_name = ucwords($clean_name);
+    } else {
+        $app_name = pathinfo($original_file, PATHINFO_FILENAME);
+    }
+
+    // 5. فحص حجم الملف الفعلي تلقائياً (عبر cURL HEAD Request)
+    $ch = curl_init($direct_url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+    curl_exec($ch);
+    $content_length = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
+    curl_close($ch);
+
+    if ($content_length > 0) {
+        $file_size = round($content_length / (1024 * 1024), 2) . " MB";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($app_title); ?> - صفحة التحميل</title>
-    <!-- خط تجوال -->
+    <title><?= htmlspecialchars($app_name); ?> - تحميل APK</title>
+    <!-- خط تجوال من Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome للأيقونات -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -56,15 +112,15 @@ $github_repo     = trim($github_repo);
 
         .download-card {
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             background: var(--bg-white);
             border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.08);
             border: 1px solid var(--border);
             overflow: hidden;
         }
 
-        /* الجزء العلوي */
+        /* الرأس الأزرق */
         .card-header {
             background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             padding: 35px 20px;
@@ -83,7 +139,7 @@ $github_repo     = trim($github_repo);
             justify-content: center;
             margin: 0 auto 12px;
             font-size: 40px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
         }
 
         .app-name {
@@ -95,13 +151,14 @@ $github_repo     = trim($github_repo);
         .version-tag {
             display: inline-block;
             background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
+            padding: 4px 14px;
             border-radius: 50px;
             font-size: 13px;
+            font-weight: 600;
             backdrop-filter: blur(5px);
         }
 
-        /* المحتوى */
+        /* الجسم */
         .card-body {
             padding: 25px;
         }
@@ -137,19 +194,9 @@ $github_repo     = trim($github_repo);
             font-size: 15px;
             font-weight: 700;
             color: var(--primary-dark);
-        }
-
-        /* رسالة حالة الفحص */
-        .status-alert {
-            display: none;
-            background: #fff1f2;
-            border: 1px solid #ffe4e6;
-            color: #e11d48;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* زر التحميل */
@@ -166,20 +213,27 @@ $github_repo     = trim($github_repo);
             border-radius: 14px;
             font-size: 17px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
             border: none;
             cursor: pointer;
-            transition: 0.3s;
+            transition: all 0.3s ease;
         }
 
         .btn-action:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
         }
 
-        .btn-loading {
-            background: #64748b !important;
-            cursor: wait;
+        .btn-disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-disabled:hover {
+            background: #94a3b8;
+            transform: none;
         }
 
         .safe-tag {
@@ -192,175 +246,78 @@ $github_repo     = trim($github_repo);
             font-weight: 600;
             margin-top: 15px;
         }
-
-        .footer {
-            margin-top: 20px;
-            font-size: 13px;
-            color: var(--text-gray);
-        }
-
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
 
     <div class="download-card">
-        <!-- الرأس -->
+        <!-- رأس البطاقة -->
         <div class="card-header">
             <div class="icon-box">
                 <i class="fa-brands fa-android"></i>
             </div>
-            <h1 class="app-name" id="appNameDisplay"><?= htmlspecialchars($app_title); ?></h1>
-            <span class="version-tag" id="versionDisplay">جاري التحقق...</span>
+            <h1 class="app-name"><?= htmlspecialchars($app_name); ?></h1>
+            <span class="version-tag">
+                <i class="fa-solid fa-code-branch"></i> <?= htmlspecialchars($version_tag); ?>
+            </span>
         </div>
 
-        <!-- المحتوى -->
+        <!-- محتوى البطاقة -->
         <div class="card-body">
             
-            <!-- نافذة تنبيه إذا وجد خطأ -->
-            <div class="status-alert" id="statusBox"></div>
-
-            <!-- إحصائيات التطبيق -->
+            <!-- معلومات الملف المستخرجة تلقائياً -->
             <div class="stats-grid">
                 <div class="stat-item">
                     <i class="fa-solid fa-file-arrow-down"></i>
                     <span class="title">حجم الملف</span>
-                    <span class="value" id="sizeDisplay">-- MB</span>
+                    <span class="value"><?= htmlspecialchars($file_size); ?></span>
                 </div>
                 <div class="stat-item">
-                    <i class="fa-solid fa-calendar-day"></i>
-                    <span class="title">تاريخ التحديث</span>
-                    <span class="value" id="dateDisplay">--/--/----</span>
+                    <i class="fa-solid fa-cubes"></i>
+                    <span class="title">اسم الحزمة</span>
+                    <span class="value" title="<?= htmlspecialchars($original_file); ?>">
+                        <?= $original_file ? htmlspecialchars($original_file) : "apk." ?>
+                    </span>
                 </div>
             </div>
 
-            <!-- زر التحميل -->
-            <a href="#" class="btn-action btn-loading" id="downloadBtn" target="_blank">
-                <i class="fa-solid fa-spinner fa-spin" id="btnIcon"></i>
-                <span id="btnText">جاري البحث عن ملف التطبيق...</span>
-            </a>
+            <!-- زر التحميل المباشر -->
+            <?php if ($is_valid): ?>
+                <a href="<?= htmlspecialchars($direct_url); ?>" class="btn-action" id="downloadBtn" download>
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>تحميل التطبيق الآن (APK)</span>
+                </a>
+            <?php else: ?>
+                <button class="btn-action btn-disabled" disabled>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>يرجى وضع رابط الملف داخل الكود أولاً</span>
+                </button>
+            <?php endif; ?>
 
             <div class="safe-tag">
-                <i class="fa-solid fa-shield-check"></i>
-                <span>تم الربط التلقائي عبر مستودع GitHub</span>
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>رابط أصلي ومباشر من GitHub</span>
             </div>
         </div>
     </div>
 
-    <div class="footer">
-        المستودع: 
-        <a href="https://github.com/<?= htmlspecialchars($github_username . '/' . $github_repo); ?>" target="_blank">
-            <i class="fa-brands fa-github"></i> <?= htmlspecialchars($github_username . '/' . $github_repo); ?>
-        </a>
-    </div>
-
-    <!-- كود الجلب الذكي التلقائي (JavaScript Core) -->
+    <!-- كود JavaScript التفاعلي -->
     <script>
-        const GITHUB_USER = "<?= $github_username; ?>";
-        const GITHUB_REPO = "<?= $github_repo; ?>";
-
-        async function findApkFromGithub() {
+        document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('downloadBtn');
-            const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
-            const appName = document.getElementById('appNameDisplay');
-            const version = document.getElementById('versionDisplay');
-            const size = document.getElementById('sizeDisplay');
-            const date = document.getElementById('dateDisplay');
-            const statusBox = document.getElementById('statusBox');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    const originalContent = this.innerHTML;
+                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري بدء التنزيل...';
+                    this.style.pointerEvents = 'none';
 
-            if (!GITHUB_USER || GITHUB_USER.includes("اسم_المستخدم")) {
-                showError("تنبيه: يجب كتابة اسم المستخدم والمستودع داخل كود index.php أولاً.");
-                return;
+                    setTimeout(() => {
+                        this.innerHTML = originalContent;
+                        this.style.pointerEvents = 'auto';
+                    }, 4000);
+                });
             }
-
-            try {
-                // 1. محاولة البحث داخل Releases أولاً
-                const relRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest`);
-                
-                if (relRes.ok) {
-                    const relData = await relRes.json();
-                    if (relData.assets && relData.assets.length > 0) {
-                        const apkAsset = relData.assets.find(a => a.name.toLowerCase().endsWith('.apk'));
-                        if (apkAsset) {
-                            applySuccess({
-                                name: relData.name || formatName(apkAsset.name),
-                                version: relData.tag_name,
-                                size: (apkAsset.size / (1024 * 1024)).toFixed(2) + ' MB',
-                                date: new Date(apkAsset.updated_at).toLocaleDateString('ar-EG'),
-                                url: apkAsset.browser_download_url
-                            });
-                            return;
-                        }
-                    }
-                }
-
-                // 2. إذا لم يجد في Releases، يبحث داخل شجرة ملفات المستودع (Branches)
-                const treeRes = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/main?recursive=1`)
-                    .then(r => r.ok ? r : fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/git/trees/master?recursive=1`));
-
-                if (treeRes.ok) {
-                    const treeData = await treeRes.json();
-                    if (treeData.tree) {
-                        const apkFile = treeData.tree.find(f => f.path.toLowerCase().endsWith('.apk'));
-                        if (apkFile) {
-                            const branch = treeData.sha ? 'main' : 'master';
-                            const rawUrl = `https://github.com/${GITHUB_USER}/${GITHUB_REPO}/raw/${branch}/${apkFile.path}`;
-                            
-                            applySuccess({
-                                name: formatName(apkFile.path),
-                                version: 'أحدث نسخة',
-                                size: apkFile.size ? (apkFile.size / (1024 * 1024)).toFixed(2) + ' MB' : 'جاهز',
-                                date: 'مباشر من المستودع',
-                                url: rawUrl
-                            });
-                            return;
-                        }
-                    }
-                }
-
-                // إذا وصل هنا، يعني لم يجد أي ملف APK
-                showError(`لم يتم العثور على أي ملف بصيغة (.apk) داخل المستودع "${GITHUB_REPO}". تأكد من رفعه في Releases أو داخل الملفات.`);
-
-            } catch (err) {
-                showError("تعذر الاتصال بـ GitHub. يرجى التأكد من أن المستودع عام (Public) وليس خاصاً.");
-            }
-
-            function applySuccess(data) {
-                appName.textContent = data.name;
-                version.textContent = data.version;
-                size.textContent = data.size;
-                date.textContent = data.date;
-                btn.href = data.url;
-
-                btn.classList.remove('btn-loading');
-                btnIcon.className = "fa-solid fa-cloud-arrow-down";
-                btnText.textContent = "تحميل التطبيق الآن (APK)";
-            }
-
-            function showError(msg) {
-                btn.classList.add('btn-loading');
-                btn.removeAttribute('href');
-                btnIcon.className = "fa-solid fa-triangle-exclamation";
-                btnText.textContent = "غير متاح للتحميل";
-                version.textContent = "غير متوفر";
-                
-                statusBox.style.display = "block";
-                statusBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`;
-            }
-
-            function formatName(filename) {
-                let name = filename.split('/').pop().replace(/\.apk$/i, '');
-                return name.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            }
-        }
-
-        // تشغيل الفحص فور فتح الصفحة
-        document.addEventListener('DOMContentLoaded', findApkFromGithub);
+        });
     </script>
 </body>
 </html>
