@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>القرآن المبين</title>
 
-<!-- إعدادات وتوافق PWA و App Inventor WebView -->
+<!-- إعدادات وتوافق PWA و App Inventor -->
 <meta name="theme-color" content="#00a3ff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,7 +14,7 @@
 <meta name="application-name" content="القرآن المبين">
 <meta name="description" content="تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت">
 
-<!-- ربط الـ Manifest المدمج -->
+<!-- ربط ملف الـ Manifest -->
 <link rel="manifest" href='data:application/manifest+json,{"id":"/index.html","name":"القرآن المبين","short_name":"","description":"تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#00a3ff","theme_color":"#00a3ff","dir":"rtl","lang":"ar","categories":["books","education","lifestyle"],"icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"maskable"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}'>
 
 <link rel="icon" href="./icon-192.png" type="image/png">
@@ -26,7 +26,6 @@
 <style>
   :root{
     --primary-blue:#00a3ff;
-    --primary-blue-dark:#0084d6;
     --gold:#c9a24b;
     --gold-soft:#e7cf8f;
     --parchment:#fdfbf7;
@@ -44,7 +43,6 @@
   }
   html.night{
     --primary-blue:#00a3ff;
-    --primary-blue-dark:#0077c2;
     --parchment:#000000;
     --parchment-2:#0d1413;
     --card:#0a1210;
@@ -69,57 +67,58 @@
   a,button{font-family:inherit;}
   button{cursor:pointer;border:none;background:none;color:inherit;}
 
-  /* ---------- Header (أزرق بالكامل) ---------- */
+  /* ---------- Header الرئيسي في الواجهة الرئيسية فقط ---------- */
   header{
     background:linear-gradient(160deg, #0093e9, #00a3ff);
     position:sticky;top:0;z-index:30;
     box-shadow:0 2px 14px rgba(0,163,255,.25);
   }
+  body.in-reader header{display:none !important;} /* إخفاء الشريط الأزرق تماماً في المصحف */
+
   .header-inner{
-    position:relative;
-    max-width:900px;margin:0 auto;
-    padding:12px 16px;
-    display:flex;align-items:center;justify-content:center;
+    position:relative;max-width:900px;margin:0 auto;
+    padding:12px 16px;display:flex;align-items:center;justify-content:center;
     min-height:50px;
   }
-  .header-inner h1{
-    margin:0;font-size:19px;font-weight:800;color:#ffffff;
-    letter-spacing:.5px;text-align:center;
-  }
+  .header-inner h1{margin:0;font-size:19px;font-weight:800;color:#ffffff;letter-spacing:.5px;}
   .icon-btn{
     position:absolute;top:50%;transform:translateY(-50%);
     width:38px;height:38px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    color:#ffffff;font-size:19px;
-    background:rgba(255,255,255,.12);
-    transition:background .15s ease;
+    color:#ffffff;font-size:19px;background:rgba(255,255,255,.14);
   }
-  .icon-btn:hover{background:rgba(255,255,255,.22);}
-  #settingsBtn{right:10px;}
-  #backBtn{left:10px;font-size:20px;}
-  #bookmarkBtn{right:10px;font-size:18px;}
-  #bookmarkBtn.marked{color:#ffde59;}
+  #settingsBtn{right:12px;}
 
-  /* ---------- Home & Full-Width Tabs (ممتد لأطراف الشاشة) ---------- */
+  /* ---------- عناصر تحكم المصحف الشفافة العائمة ---------- */
+  .reader-floating-nav{
+    position:fixed;top:0;left:0;right:0;z-index:35;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 12px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+    transition:opacity 0.25s ease, visibility 0.25s ease;
+  }
+  .reader-floating-nav.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+  .floating-btn{
+    width:42px;height:42px;border-radius:50%;
+    background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);
+    color:#ffffff;display:flex;align-items:center;justify-content:center;
+    font-size:18px;border:1px solid rgba(255,255,255,0.25);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  }
+  .floating-btn.marked{color:#ffde59;}
+
+  /* ---------- Home & Tabs ---------- */
   #homeView{max-width:900px;margin:0 auto;width:100%;padding:0 0 60px;flex:1;}
-  
   .tabs{
-    display:flex;width:100%;background:var(--card);
-    border-bottom:2px solid var(--line);
-    margin:0 0 12px;padding:0;border-radius:0;border-top:none;border-left:none;border-right:none;
-    box-shadow:0 2px 8px rgba(0,0,0,.03);
+    display:flex;width:100%;background:var(--card);border-bottom:2px solid var(--line);
+    margin:0 0 12px;padding:0;
   }
   .tab-btn{
     flex:1;padding:13px 8px;font-weight:700;font-size:15.5px;
     color:var(--text-muted);background:transparent;border:none;
-    border-bottom:3px solid transparent;transition:all .2s ease;
-    text-align:center;
+    border-bottom:3px solid transparent;transition:all .2s ease;text-align:center;
   }
-  .tab-btn.active{
-    color:var(--primary-blue);
-    border-bottom-color:var(--primary-blue);
-    font-weight:800;
-  }
+  .tab-btn.active{color:var(--primary-blue);border-bottom-color:var(--primary-blue);font-weight:800;}
 
   .resume-card{margin:0 12px 14px;}
   .resume-inner{
@@ -151,32 +150,21 @@
     box-shadow:var(--shadow);transition:transform .15s ease, border-color .15s ease;
     text-align:right;
   }
-  .surah-card:active, .juz-card:active{transform:scale(.98);}
   .surah-card:hover, .juz-card:hover{border-color:var(--primary-blue);}
   
-  /* إزالة مربع العدد وظهور الرقم بالأزرق فقط */
   .badge{
-    flex:none;width:auto;min-width:24px;height:auto;
-    background:none !important;border:none !important;box-shadow:none !important;
-    color:var(--primary-blue);display:inline-flex;align-items:center;
-    justify-content:center;font-weight:800;font-size:16.5px;
-    margin-left:6px;padding:0;
+    flex:none;width:auto;min-width:24px;color:var(--primary-blue);
+    display:inline-flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:16.5px;margin-left:6px;
   }
-  .badge::before{display:none !important;}
-
   .s-info{flex:1;min-width:0;}
-  .s-name{display:block;font-family:'Tajawal',sans-serif;font-weight:800;font-size:16px;color:var(--text-main);}
+  .s-name{display:block;font-weight:800;font-size:16px;color:var(--text-main);}
   .s-meta{display:block;font-size:12px;color:var(--text-muted);margin-top:4px;}
   .s-range{display:block;font-size:12px;color:var(--gold);margin-top:4px;font-weight:700;}
-  
-  .empty-msg, .load-msg{text-align:center;padding:40px 14px;color:var(--text-muted);font-size:14px;}
-  .load-msg .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--primary-blue);
-    margin:0 auto 10px;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
 
-  /* ---------- Reader: True Mushaf Layout ---------- */
+  /* ---------- Full Screen Mushaf View ---------- */
   #readerView{
-    width:100%;margin:0 auto;padding:0 0 20px;flex:1;
+    width:100%;margin:0 auto;padding:0;flex:1;
     display:flex;flex-direction:column;background:var(--card);
   }
   .audio-bar{
@@ -192,7 +180,6 @@
     font-size:18px;color:var(--text-main);background:var(--parchment-2);
     border:1px solid var(--line);
   }
-  .ab-btn:hover{border-color:var(--primary-blue);}
   .ab-btn.ab-main{
     width:54px;height:54px;font-size:20px;
     background:var(--primary-blue);color:#ffffff;border-color:var(--primary-blue);
@@ -208,30 +195,29 @@
   
   .qcf-page{
     flex:0 0 100%;width:100%;max-width:580px;margin:0 auto;box-sizing:border-box;
-    scroll-snap-align:start;padding:4px 8px 12px;display:flex;flex-direction:column;
-    justify-content:space-between;height:calc(100vh - 56px);user-select:none;
+    scroll-snap-align:start;
+    padding:calc(10px + env(safe-area-inset-top)) 10px calc(14px + env(safe-area-inset-bottom));
+    display:flex;flex-direction:column;justify-content:space-between;
+    height:100vh;height:100dvh;user-select:none;
   }
   .qcf-page-num{
-    text-align:center;font-size:11.5px;color:var(--text-muted);margin:0 0 2px;flex:none;
+    text-align:center;font-size:11.5px;color:var(--text-muted);margin:0 0 4px;flex:none;
     font-family:'Tajawal',sans-serif;
   }
   .qcf-page-num::before, .qcf-page-num::after{content:"—";color:var(--gold);margin:0 8px;opacity:.6;}
   
   .qcf-lines{display:flex;flex-direction:column;width:100%;}
 
-  /* صفحات المصحف العادية (١٥ سطراً) */
+  /* أسطر المصحف كاملة بدقة متناهية */
   .qcf-page:not(.qcf-page-opening) .qcf-lines{justify-content:space-between;flex:1;}
   .qcf-page:not(.qcf-page-opening) .qcf-line{
     direction:rtl;display:flex;justify-content:space-between;align-items:center;
     width:100%;white-space:nowrap;font-size:var(--mushaf-size);line-height:1;
-    height:calc((100vh - 80px) / 15);max-height:54px;
+    height:calc((100dvh - 60px) / 15);max-height:56px;
   }
 
-  /* صفحتا البداية (الفاتحة وأول البقرة مع تباعد متناسق) */
   .qcf-page-opening .qcf-lines{
-    justify-content:center;
-    gap:13px;
-    margin:auto 0;flex:1;
+    justify-content:center;gap:13px;margin:auto 0;flex:1;
   }
   .qcf-page-opening .qcf-line{
     direction:rtl;display:flex;justify-content:center !important;align-items:center;
@@ -252,7 +238,7 @@
   }
   .qcf-word:hover{background:var(--parchment-2);}
   
-  /* تتبع الآيات شفاف تماماً ومريح للعين */
+  /* تتبع الآيات شفاف تماماً */
   .qcf-word.playing{
     background: rgba(0, 163, 255, 0.12) !important;
     color: var(--primary-blue) !important;
@@ -295,12 +281,10 @@
   .dl-action-btn{
     width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);
     background:var(--primary-blue);color:#ffffff;font-weight:700;font-size:13px;
-    display:flex;align-items:center;justify-content:space-between;transition:opacity .2s;
+    display:flex;align-items:center;justify-content:space-between;
   }
   .dl-action-btn:disabled{opacity:0.65;cursor:not-allowed;}
-  .dl-progress-bar{
-    height:5px;background:var(--line);border-radius:99px;margin-top:10px;overflow:hidden;display:none;
-  }
+  .dl-progress-bar{height:5px;background:var(--line);border-radius:99px;margin-top:10px;overflow:hidden;display:none;}
   .dl-progress-bar.show{display:block;}
   .dl-progress-fill{height:100%;width:0%;background:var(--primary-blue);transition:width .15s linear;}
   
@@ -311,7 +295,7 @@
   }
   .drawer-btn.danger{color:#dc3545;border-color:rgba(220,53,69,0.25);}
 
-  /* ---------- Modal ---------- */
+  /* ---------- Modal & Toast ---------- */
   .modal-overlay{
     position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:90;
     backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;
@@ -319,9 +303,8 @@
   .modal-card{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
     max-width:360px;width:100%;padding:20px 18px;box-shadow:0 15px 40px rgba(0,0,0,0.4);
-    text-align:center;animation:modalPop .22s cubic-bezier(0.16,1,0.3,1);
+    text-align:center;
   }
-  @keyframes modalPop{from{transform:scale(0.88);opacity:0;}to{transform:scale(1);opacity:1;}}
   .modal-title{font-weight:800;font-size:16px;color:var(--text-main);margin-bottom:8px;}
   .modal-body{font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-bottom:18px;}
   .modal-actions{display:flex;gap:10px;}
@@ -334,20 +317,28 @@
     background:#1c2b28;color:#f4ead0;padding:10px 18px;border-radius:99px;
     font-size:13px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:88vw;text-align:center;
   }
-  ::selection{background:rgba(0, 163, 255, 0.25);}
+  .empty-msg, .load-msg{text-align:center;padding:40px 14px;color:var(--text-muted);font-size:14px;}
+  .load-msg .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--primary-blue);
+    margin:0 auto 10px;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 <div id="app">
 
+  <!-- Header الرئيسي للواجهة الرئيسية فقط -->
   <header>
     <div class="header-inner">
-      <button id="backBtn" class="icon-btn hidden" title="رجوع">➜</button>
-      <h1 id="appTitle">القرآن المبين</h1>
+      <h1>القرآن المبين</h1>
       <button id="settingsBtn" class="icon-btn" title="الإعدادات">⚙</button>
-      <button id="bookmarkBtn" class="icon-btn hidden" title="حفظ العلامة المرجعية">🔖</button>
     </div>
   </header>
+
+  <!-- أزرار المصحف العائمة الشفافة (تظهر عند لمس الشاشة فقط) -->
+  <div id="readerNav" class="reader-floating-nav hidden">
+    <button id="readerBackBtn" class="floating-btn" title="رجوع">➜</button>
+    <button id="readerBookmarkBtn" class="floating-btn" title="حفظ العلامة المرجعية">🔖</button>
+  </div>
 
   <!-- HOME -->
   <main id="homeView">
@@ -368,7 +359,7 @@
     </div>
   </main>
 
-  <!-- READER -->
+  <!-- READER (مصحف كامل بدون شريط علوي) -->
   <main id="readerView" class="hidden">
     <div id="mushafContainer" class="mushaf">
       <div class="load-msg"><div class="spinner"></div>جاري التحميل…</div>
@@ -446,7 +437,7 @@
 (function(){
 "use strict";
 
-/* ================= STORAGE & MULTI-LAYER APP INVENTOR SYNC ================= */
+/* ================= STORAGE & OFFLINE DB ================= */
 const memoryStore = {};
 const storage = {
   get(k){ try{ return window.localStorage.getItem(k); }catch(e){ return memoryStore[k] || null; } },
@@ -455,13 +446,11 @@ const storage = {
   keys(){ try{ return Object.keys(window.localStorage); }catch(e){ return Object.keys(memoryStore); } }
 };
 
-function setCookie(name, val){
-  try{ document.cookie = `${name}=${encodeURIComponent(val)};max-age=315360000;path=/;SameSite=Lax`; }catch(e){}
-}
-function getCookie(name){
+function setCookie(n, v){ try{ document.cookie = `${n}=${encodeURIComponent(v)};max-age=315360000;path=/;SameSite=Lax`; }catch(e){} }
+function getCookie(n){
   try{
-    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-    if(match) return decodeURIComponent(match[2]);
+    const m = document.cookie.match(new RegExp('(^| )' + n + '=([^;]+)'));
+    if (m) return decodeURIComponent(m[2]);
   }catch(e){}
   return null;
 }
@@ -473,13 +462,11 @@ let idbPromise = null;
 function openIDB(){
   if(idbPromise) return idbPromise;
   idbPromise = new Promise((resolve, reject)=>{
-    if(!window.indexedDB){ reject(new Error("IndexedDB not available")); return; }
+    if(!window.indexedDB){ reject(new Error("No IDB")); return; }
     const req = indexedDB.open(IDB_NAME, IDB_VERSION);
     req.onupgradeneeded = (e)=>{
       const db = e.target.result;
-      ["pages","audio","meta","fonts"].forEach(store => {
-        if(!db.objectStoreNames.contains(store)) db.createObjectStore(store);
-      });
+      ["pages","audio","meta","fonts"].forEach(s => { if(!db.objectStoreNames.contains(s)) db.createObjectStore(s); });
     };
     req.onsuccess = ()=>resolve(req.result);
     req.onerror = ()=>reject(req.error);
@@ -523,15 +510,13 @@ async function idbClear(store){
   }catch(e){ return false; }
 }
 
-/* ================= PERSISTENT USER SETTINGS (App Inventor Compatible) ================= */
+/* ================= PERSISTENT USER SETTINGS ================= */
 function loadImmediateSettings(){
   const r = storage.get("qm_reciter") || getCookie("qm_reciter");
   let n = storage.get("qm_night");
   if(n === null) n = getCookie("qm_night");
-
   if(r && RECITERS.some(x=>x.id===r)) state.reciter = r;
   if(n !== null) state.night = (n === "1" || n === "true");
-
   applyTheme();
 }
 
@@ -557,46 +542,36 @@ async function saveSettings(){
   storage.set("qm_night", state.night ? "1" : "0");
   setCookie("qm_reciter", state.reciter);
   setCookie("qm_night", state.night ? "1" : "0");
-  await idbSet("meta", "user_settings", {
-    reciter: state.reciter,
-    night: state.night
-  });
+  await idbSet("meta", "user_settings", { reciter: state.reciter, night: state.night });
 }
 
-/* محرك التنزيل السريع المتزامن */
 async function runConcurrent(tasks, concurrency, onProgress){
-  let index = 0;
-  let completed = 0;
+  let idx = 0, completed = 0;
   const total = tasks.length;
   async function worker(){
-    while(index < tasks.length){
-      const taskIndex = index++;
+    while(idx < tasks.length){
+      const taskIndex = idx++;
       try{ await tasks[taskIndex](); }catch(e){}
       completed++;
       if(onProgress) onProgress(completed, total);
     }
   }
-  const workers = Array.from({length: Math.min(concurrency, tasks.length)}, () => worker());
-  await Promise.all(workers);
+  await Promise.all(Array.from({length: Math.min(concurrency, tasks.length)}, () => worker()));
 }
 
-/* ================= CUSTOM CONFIRM MODAL ================= */
 function customConfirm(message, title="تأكيد الإجراء"){
   return new Promise((resolve)=>{
     const modal = $("#confirmModal");
     $("#modalTitle").textContent = title;
     $("#modalMessage").textContent = message;
     modal.classList.remove("hidden");
-
     const onConfirm = ()=>{ cleanup(); resolve(true); };
     const onCancel = ()=>{ cleanup(); resolve(false); };
-
     function cleanup(){
       modal.classList.add("hidden");
       $("#modalConfirmBtn").removeEventListener("click", onConfirm);
       $("#modalCancelBtn").removeEventListener("click", onCancel);
     }
-
     $("#modalConfirmBtn").addEventListener("click", onConfirm);
     $("#modalCancelBtn").addEventListener("click", onCancel);
   });
@@ -714,7 +689,6 @@ let state = {
   currentBlobUrl:null
 };
 
-/* ================= HELPERS ================= */
 const $ = (sel)=>document.querySelector(sel);
 const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
 
@@ -741,29 +715,25 @@ function applyTheme(){
 
 /* ================= NAVIGATION ================= */
 function showHome(){
+  document.body.classList.remove("in-reader");
   $("#homeView").classList.remove("hidden");
   $("#readerView").classList.add("hidden");
-  $("#backBtn").classList.add("hidden");
-  $("#appTitle").classList.remove("hidden");
-  $("#settingsBtn").classList.remove("hidden");
-  $("#bookmarkBtn").classList.add("hidden");
+  $("#readerNav").classList.add("hidden");
   $("#audioBar").classList.add("hidden");
   stopAudio();
   renderResumeCard();
 }
 
 function showReader(){
+  document.body.classList.add("in-reader");
   $("#homeView").classList.add("hidden");
   $("#readerView").classList.remove("hidden");
-  $("#backBtn").classList.remove("hidden");
-  $("#appTitle").classList.add("hidden");
-  $("#settingsBtn").classList.add("hidden");
-  $("#bookmarkBtn").classList.remove("hidden");
+  $("#readerNav").classList.add("hidden");
   $("#audioBar").classList.add("hidden");
   window.scrollTo({top:0});
 }
 
-$("#backBtn").addEventListener("click", showHome);
+$("#readerBackBtn").addEventListener("click", showHome);
 
 $$(".tab-btn").forEach(btn=>{
   btn.addEventListener("click", ()=>{
@@ -858,10 +828,10 @@ function getBookmark(){
 function updateBookmarkBtn(){
   const bm = getBookmark();
   const isMarked = !!(bm && state.currentVisiblePage && bm.page === state.currentVisiblePage);
-  $("#bookmarkBtn").classList.toggle("marked", isMarked);
+  $("#readerBookmarkBtn").classList.toggle("marked", isMarked);
 }
 
-$("#bookmarkBtn").addEventListener("click", ()=>{
+$("#readerBookmarkBtn").addEventListener("click", ()=>{
   if(!state.currentVisiblePage){ toast("افتح صفحة أولًا"); return; }
   const bm = getBookmark();
   if(bm && bm.page === state.currentVisiblePage){
@@ -1019,29 +989,31 @@ function observeVisiblePages(box){
   box.querySelectorAll(".qcf-page").forEach(p=>pageObserver.observe(p));
 }
 
-let audioBarHideTimer = null;
-function showAudioBar(){
+let controlsTimer = null;
+function showReaderControls(){
+  $("#readerNav").classList.remove("hidden");
   $("#audioBar").classList.remove("hidden");
-  clearTimeout(audioBarHideTimer);
-  audioBarHideTimer = setTimeout(()=>{ $("#audioBar").classList.add("hidden"); }, 3200);
+  clearTimeout(controlsTimer);
+  controlsTimer = setTimeout(()=>hideReaderControls(), 3200);
 }
-function hideAudioBar(){
-  clearTimeout(audioBarHideTimer);
+function hideReaderControls(){
+  clearTimeout(controlsTimer);
+  $("#readerNav").classList.add("hidden");
   $("#audioBar").classList.add("hidden");
 }
 
 function onMushafClick(e){
   const el = e.target.closest(".qcf-word[data-verse]");
   if(!el){
-    if($("#audioBar").classList.contains("hidden")) showAudioBar();
-    else hideAudioBar();
+    if($("#audioBar").classList.contains("hidden")) showReaderControls();
+    else hideReaderControls();
     return;
   }
   const key = el.dataset.verse;
   const idx = state.currentAyahs.findIndex(a=>a.key===key);
   if(idx>=0){
     playFromIndex(idx);
-    showAudioBar();
+    showReaderControls();
   }
 }
 
@@ -1134,10 +1106,10 @@ $("#playPauseBtn").addEventListener("click", ()=>{
     audioEl.play();
     state.isPlaying = true;
     $("#playPauseBtn").textContent = "❚❚";
-    showAudioBar();
+    showReaderControls();
   } else {
     playFromIndex(0);
-    showAudioBar();
+    showReaderControls();
   }
 });
 
@@ -1145,10 +1117,10 @@ $("#nextBtn").addEventListener("click", ()=>{
   if(!state.currentAyahs.length) return;
   if(state.playIndex + 1 < state.currentAyahs.length){
     playFromIndex(state.playIndex + 1);
-    showAudioBar();
+    showReaderControls();
   } else if(state.currentMode === "surah" && state.currentNumber < 114){
     openReader("surah", state.currentNumber + 1).then(()=>playFromIndex(0));
-    showAudioBar();
+    showReaderControls();
   } else {
     toast("هذه آخر آية");
   }
@@ -1158,15 +1130,15 @@ $("#prevBtn").addEventListener("click", ()=>{
   if(!state.currentAyahs.length) return;
   if(state.playIndex > 0){
     playFromIndex(state.playIndex - 1);
-    showAudioBar();
+    showReaderControls();
   } else if(state.currentMode === "surah" && state.currentNumber > 1){
     openReader("surah", state.currentNumber - 1).then(()=>{
       playFromIndex(state.currentAyahs.length - 1);
-      showAudioBar();
+      showReaderControls();
     });
   } else if(state.playIndex === 0){
     playFromIndex(0);
-    showAudioBar();
+    showReaderControls();
   } else {
     toast("افتح آية أولًا");
   }
@@ -1176,7 +1148,7 @@ $("#repeatBtn").addEventListener("click", ()=>{
   state.repeat = !state.repeat;
   $("#repeatBtn").classList.toggle("active", state.repeat);
   toast(state.repeat ? "تكرار الآية: مفعّل" : "تكرار الآية: متوقف");
-  showAudioBar();
+  showReaderControls();
 });
 
 /* ================= ULTRA FAST PARALLEL DOWNLOADS ================= */
