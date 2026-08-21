@@ -1,69 +1,20 @@
 <?php
-/**
- * =====================================================================
- *  تم وضع رابط التحميل الخاص بك من MIT App Inventor
- * =====================================================================
- */
-$apk_link = "https://ai2a.appinventor.mit.edu/b/vu2f";
-
-// =================== معالجة الرابط تلقائياً ===================
-$app_name      = "تطبيق أندرويد";
-$version_tag   = "v1.0.0";
-$file_size     = "جاهز للتحميل";
-$direct_url    = $apk_link;
-$original_file = "AppInventor_App.apk";
-$is_valid      = !empty($apk_link);
-
-if ($is_valid) {
-    // فحص الرابط وجلب ترويسات الملف وحجمه الفعلي
-    $ch = curl_init($apk_link);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_NOBODY, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    
-    $response_headers = curl_exec($ch);
-    $content_length   = curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-    $effective_url    = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
-    curl_close($ch);
-
-    // 1. حساب حجم الملف الفعلي
-    if ($content_length > 0) {
-        $file_size = round($content_length / (1024 * 1024), 2) . " MB";
-    }
-
-    // 2. محاولة استخراج اسم الملف الأصلي من ترويسة Content-Disposition
-    if (preg_match('/filename=["\']?([^"\';\n]+)["\']?/i', $response_headers, $match)) {
-        $original_file = trim($match[1]);
-        $clean_name    = pathinfo($original_file, PATHINFO_FILENAME);
-        $app_name      = ucwords(str_replace(['-', '_', '.'], ' ', $clean_name));
-    } else {
-        // إذا كان الرابط النهائي يحتوي على اسم الملف
-        $final_path = parse_url($effective_url, PHP_URL_PATH);
-        $extracted  = basename($final_path);
-        if (strpos($extracted, '.apk') !== false) {
-            $original_file = $extracted;
-            $clean_name    = pathinfo($extracted, PATHINFO_FILENAME);
-            $app_name      = ucwords(str_replace(['-', '_', '.'], ' ', $clean_name));
-        } else {
-            $app_name      = "تطبيقك المطور";
-            $original_file = "App_Build.apk";
-        }
-    }
-}
+// رابط التحميل المباشر لتطبيقك
+$apk_link     = "https://ai2a.appinventor.mit.edu/b/vu2f";
+$app_name     = "تطبيقي الخاص";
+$version_tag  = "v1.0.0";
+$package_name = "AppInventor_App.apk";
+$file_size    = "جاهز للتحميل";
 ?>
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($app_name); ?> - صفحة التحميل</title>
+    <title><?php echo $app_name; ?> - صفحة التحميل</title>
     <!-- خط تجوال من Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <!-- FontAwesome للأيقونات -->
+    <!-- أيقونات FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -101,8 +52,8 @@ if ($is_valid) {
             width: 100%;
             max-width: 480px;
             background: var(--bg-white);
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.08);
+            border-radius: 26px;
+            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.1);
             border: 1px solid var(--border);
             overflow: hidden;
         }
@@ -116,17 +67,17 @@ if ($is_valid) {
         }
 
         .icon-box {
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             background: #ffffff;
             color: var(--primary);
-            border-radius: 20px;
+            border-radius: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 12px;
-            font-size: 40px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 14px;
+            font-size: 44px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
         }
 
         .app-name {
@@ -145,29 +96,29 @@ if ($is_valid) {
             backdrop-filter: blur(5px);
         }
 
-        /* محتوى البطاقة */
+        /* المحتوى الداخلي */
         .card-body {
-            padding: 25px;
+            padding: 26px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         .stat-item {
             background: var(--primary-light);
             border: 1px solid #dbeafe;
-            border-radius: 14px;
-            padding: 12px;
+            border-radius: 16px;
+            padding: 14px 10px;
             text-align: center;
         }
 
         .stat-item i {
             color: var(--primary);
-            font-size: 18px;
+            font-size: 20px;
             margin-bottom: 4px;
         }
 
@@ -178,12 +129,13 @@ if ($is_valid) {
         }
 
         .stat-item .value {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--primary-dark);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-top: 2px;
         }
 
         /* زر التحميل */
@@ -197,10 +149,10 @@ if ($is_valid) {
             color: #ffffff;
             text-decoration: none;
             padding: 16px;
-            border-radius: 14px;
-            font-size: 17px;
+            border-radius: 16px;
+            font-size: 18px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.3);
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -209,7 +161,7 @@ if ($is_valid) {
         .btn-action:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+            box-shadow: 0 12px 26px rgba(37, 99, 235, 0.4);
         }
 
         .safe-tag {
@@ -220,46 +172,44 @@ if ($is_valid) {
             color: var(--success);
             font-size: 13px;
             font-weight: 600;
-            margin-top: 15px;
+            margin-top: 16px;
         }
     </style>
 </head>
 <body>
 
     <div class="download-card">
-        <!-- الرأس -->
+        <!-- رأس البطاقة -->
         <div class="card-header">
             <div class="icon-box">
                 <i class="fa-brands fa-android"></i>
             </div>
-            <h1 class="app-name"><?= htmlspecialchars($app_name); ?></h1>
+            <h1 class="app-name" id="appName"><?php echo $app_name; ?></h1>
             <span class="version-tag">
-                <i class="fa-solid fa-code-branch"></i> <?= htmlspecialchars($version_tag); ?>
+                <i class="fa-solid fa-code-branch"></i> <span id="appVersion"><?php echo $version_tag; ?></span>
             </span>
         </div>
 
-        <!-- الجسم -->
+        <!-- جسم البطاقة -->
         <div class="card-body">
-            <!-- التفاصيل التلقائية -->
+            <!-- التفاصيل -->
             <div class="stats-grid">
                 <div class="stat-item">
                     <i class="fa-solid fa-file-arrow-down"></i>
                     <span class="title">حجم الملف</span>
-                    <span class="value"><?= htmlspecialchars($file_size); ?></span>
+                    <span class="value" id="fileSize"><?php echo $file_size; ?></span>
                 </div>
                 <div class="stat-item">
                     <i class="fa-solid fa-cubes"></i>
                     <span class="title">حزمة التطبيق</span>
-                    <span class="value" title="<?= htmlspecialchars($original_file); ?>">
-                        <?= htmlspecialchars($original_file); ?>
-                    </span>
+                    <span class="value" id="packageName"><?php echo $package_name; ?></span>
                 </div>
             </div>
 
             <!-- زر التحميل المباشر -->
-            <a href="<?= htmlspecialchars($direct_url); ?>" class="btn-action" id="downloadBtn">
-                <i class="fa-solid fa-cloud-arrow-down"></i>
-                <span>تحميل التطبيق الآن (APK)</span>
+            <a href="<?php echo $apk_link; ?>" class="btn-action" id="downloadBtn">
+                <i class="fa-solid fa-cloud-arrow-down" id="btnIcon"></i>
+                <span id="btnText">تحميل التطبيق الآن (APK)</span>
             </a>
 
             <div class="safe-tag">
@@ -269,17 +219,25 @@ if ($is_valid) {
         </div>
     </div>
 
-    <!-- كود JavaScript التفاعلي -->
+    <!-- كود تفاعلي يضمن العمل على السيرفر وعلى المتصفح مباشرة -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const downloadUrl = "https://ai2a.appinventor.mit.edu/b/vu2f";
             const btn = document.getElementById('downloadBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+
             if (btn) {
+                // التأكد من توجيه الرابط بشكل صحيح
+                btn.href = downloadUrl;
+
                 btn.addEventListener('click', function() {
-                    const originalContent = this.innerHTML;
-                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري بدء التنزيل...';
-                    
+                    btnIcon.className = "fa-solid fa-spinner fa-spin";
+                    btnText.textContent = "جاري بدء التنزيل...";
+
                     setTimeout(() => {
-                        this.innerHTML = originalContent;
+                        btnIcon.className = "fa-solid fa-cloud-arrow-down";
+                        btnText.textContent = "تحميل التطبيق الآن (APK)";
                     }, 4000);
                 });
             }
