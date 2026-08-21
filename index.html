@@ -14,7 +14,9 @@
 <meta name="application-name" content="القرآن المبين">
 <meta name="description" content="تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت">
 
-<link rel="manifest" href="./manifest.json">
+<!-- ربط ملف الـ Manifest المدمج -->
+<link rel="manifest" href='data:application/manifest+json,{"id":"/index.html","name":"القرآن المبين","short_name":"","description":"تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#00a3ff","theme_color":"#00a3ff","dir":"rtl","lang":"ar","categories":["books","education","lifestyle"],"icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"maskable"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}'>
+
 <link rel="icon" href="./icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="./icon-192.png">
 
@@ -216,7 +218,7 @@
   /* صفحتا البداية (الفاتحة وأول البقرة مع تباعد متناسق) */
   .qcf-page-opening .qcf-lines{
     justify-content:center;
-    gap:13px; /* تباعد بسيط ومريح بين الأسطر */
+    gap:13px;
     margin:auto 0;flex:1;
   }
   .qcf-page-opening .qcf-line{
@@ -241,7 +243,7 @@
   html.night .qcf-word.playing{background:#bda255;color:#000000 !important;font-weight:bold;}
   .qcf-line-center .qcf-word, .qcf-header-line .qcf-word{cursor:default;}
 
-  /* ---------- Settings Drawer (تصميم حديث وموجز) ---------- */
+  /* ---------- Settings Drawer ---------- */
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;backdrop-filter:blur(2px);}
   .drawer{
     position:fixed;top:0;bottom:0;right:0;width:min(94vw,400px);z-index:50;
@@ -376,7 +378,6 @@
       <button id="nightModeToggle" class="switch"></button>
     </div>
 
-    <!-- بطاقات التنزيل السريعة والموجزة -->
     <div class="settings-card">
       <div class="settings-card-title">📖 المصحف للقراءة بدون نت</div>
       <button id="downloadAllPagesBtn" class="dl-action-btn">
@@ -404,7 +405,6 @@
     </div>
   </aside>
 
-  <!-- نافذة التأكيد المخصصة -->
   <div id="confirmModal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-title" id="modalTitle">تأكيد</div>
@@ -1154,7 +1154,6 @@ async function downloadAllPages(onProgress){
       }
     });
   }
-  // تنزيل متزامن فائق السرعة لجميع الصفحات
   await runConcurrent(pageTasks, 10, onProgress);
   await registerQcfFonts();
 }
@@ -1179,7 +1178,6 @@ async function downloadAllAudio(reciterId, onProgress){
       });
     }
   }
-  // تنزيل متزامن فائق السرعة بـ ١٢ مساراً متوازياً للتلاوات
   await runConcurrent(audioTasks, 12, onProgress);
 }
 
@@ -1321,9 +1319,48 @@ async function init(){
 
 init();
 
+/* ================= INLINE SERVICE WORKER (دمج كود sw.js بالكامل بدون ملفات إضافية) ================= */
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
-    navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(()=>{});
+    const swInlineCode = `
+      const CACHE_NAME = 'qm-pwa-cache-v2';
+      const STATIC_ASSETS = ['./', './index.html', './icon-192.png', './icon-512.png'];
+
+      self.addEventListener('install', (e) => {
+        e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS).catch(()=>{})));
+        self.skipWaiting();
+      });
+
+      self.addEventListener('activate', (e) => {
+        e.waitUntil(
+          caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
+        );
+        self.clients.claim();
+      });
+
+      self.addEventListener('fetch', (e) => {
+        if (e.request.method !== 'GET') return;
+        e.respondWith(
+          caches.match(e.request).then((cached) => {
+            if (cached) return cached;
+            return fetch(e.request).then((res) => {
+              if (!res || res.status !== 200) return res;
+              const resClone = res.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
+              return res;
+            }).catch(() => cached);
+          })
+        );
+      });
+    `;
+
+    try {
+      const swBlob = new Blob([swInlineCode], { type: "application/javascript" });
+      const swUrl = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(() => {
+        navigator.serviceWorker.register(swUrl, { scope: "./" }).catch(() => {});
+      });
+    } catch(e) {}
   });
 }
 })();
