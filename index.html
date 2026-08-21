@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>القرآن المبين</title>
 
-<!-- إعدادات وتوافق PWA و PWABuilder -->
-<meta name="theme-color" content="#0e3b36">
+<!-- إعدادات وتوافق PWA و App Inventor WebView -->
+<meta name="theme-color" content="#00a3ff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,7 +14,7 @@
 <meta name="application-name" content="القرآن المبين">
 <meta name="description" content="تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت">
 
-<!-- ربط ملف الـ Manifest المدمج -->
+<!-- ربط الـ Manifest المدمج -->
 <link rel="manifest" href='data:application/manifest+json,{"id":"/index.html","name":"القرآن المبين","short_name":"","description":"تطبيق القرآن المبين لقراءة واستماع القرآن الكريم برواية حفص عن عاصم بدون إنترنت","start_url":"./index.html","scope":"./","display":"standalone","orientation":"portrait","background_color":"#00a3ff","theme_color":"#00a3ff","dir":"rtl","lang":"ar","categories":["books","education","lifestyle"],"icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icon-192.png","sizes":"192x192","type":"image/png","purpose":"maskable"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}'>
 
 <link rel="icon" href="./icon-192.png" type="image/png">
@@ -25,8 +25,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0e3b36;
-    --ink-2:#123f3a;
+    --primary-blue:#00a3ff;
+    --primary-blue-dark:#0084d6;
     --gold:#c9a24b;
     --gold-soft:#e7cf8f;
     --parchment:#fdfbf7;
@@ -35,7 +35,7 @@
     --text-main:#111a18;
     --text-muted:#5b6d68;
     --line:#e5dcc3;
-    --shadow: 0 8px 24px rgba(14,59,54,.08);
+    --shadow: 0 8px 24px rgba(0,0,0,.06);
     --radius:16px;
     --mushaf-size: clamp(20px, 5.85vw, 30px);
     --header-frame-bg: rgba(201, 162, 75, 0.08);
@@ -43,8 +43,8 @@
     color-scheme: light;
   }
   html.night{
-    --ink:#051210;
-    --ink-2:#000000;
+    --primary-blue:#00a3ff;
+    --primary-blue-dark:#0077c2;
     --parchment:#000000;
     --parchment-2:#0d1413;
     --card:#0a1210;
@@ -69,11 +69,11 @@
   a,button{font-family:inherit;}
   button{cursor:pointer;border:none;background:none;color:inherit;}
 
-  /* ---------- Header ---------- */
+  /* ---------- Header (أزرق بالكامل) ---------- */
   header{
-    background:linear-gradient(160deg,var(--ink),var(--ink-2));
+    background:linear-gradient(160deg, #0093e9, #00a3ff);
     position:sticky;top:0;z-index:30;
-    box-shadow:0 2px 14px rgba(0,0,0,.18);
+    box-shadow:0 2px 14px rgba(0,163,255,.25);
   }
   .header-inner{
     position:relative;
@@ -83,53 +83,62 @@
     min-height:50px;
   }
   .header-inner h1{
-    margin:0;font-size:18px;font-weight:800;color:var(--gold-soft);
+    margin:0;font-size:19px;font-weight:800;color:#ffffff;
     letter-spacing:.5px;text-align:center;
   }
   .icon-btn{
     position:absolute;top:50%;transform:translateY(-50%);
     width:38px;height:38px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    color:var(--gold-soft);font-size:19px;
-    background:rgba(255,255,255,.06);
+    color:#ffffff;font-size:19px;
+    background:rgba(255,255,255,.12);
     transition:background .15s ease;
   }
-  .icon-btn:hover{background:rgba(255,255,255,.14);}
+  .icon-btn:hover{background:rgba(255,255,255,.22);}
   #settingsBtn{right:10px;}
   #backBtn{left:10px;font-size:20px;}
   #bookmarkBtn{right:10px;font-size:18px;}
-  #bookmarkBtn.marked{color:var(--gold);}
+  #bookmarkBtn.marked{color:#ffde59;}
 
-  /* ---------- Home ---------- */
-  #homeView{max-width:900px;margin:0 auto;width:100%;padding:16px 14px 60px;flex:1;}
+  /* ---------- Home & Full-Width Tabs (ممتد لأطراف الشاشة) ---------- */
+  #homeView{max-width:900px;margin:0 auto;width:100%;padding:0 0 60px;flex:1;}
+  
   .tabs{
-    display:flex;gap:8px;background:var(--card);border:1px solid var(--line);
-    border-radius:999px;padding:5px;margin:6px 0 14px;box-shadow:var(--shadow);
+    display:flex;width:100%;background:var(--card);
+    border-bottom:2px solid var(--line);
+    margin:0 0 12px;padding:0;border-radius:0;border-top:none;border-left:none;border-right:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.03);
   }
   .tab-btn{
-    flex:1;padding:10px 8px;border-radius:999px;font-weight:700;font-size:14.5px;
-    color:var(--text-muted);transition:all .2s ease;
+    flex:1;padding:13px 8px;font-weight:700;font-size:15.5px;
+    color:var(--text-muted);background:transparent;border:none;
+    border-bottom:3px solid transparent;transition:all .2s ease;
+    text-align:center;
   }
-  .tab-btn.active{background:var(--ink);color:var(--gold-soft);}
+  .tab-btn.active{
+    color:var(--primary-blue);
+    border-bottom-color:var(--primary-blue);
+    font-weight:800;
+  }
 
-  .resume-card{margin-bottom:14px;}
+  .resume-card{margin:0 12px 14px;}
   .resume-inner{
     width:100%;display:flex;align-items:center;gap:12px;
-    background:var(--ink);color:var(--gold-soft);border-radius:var(--radius);
+    background:linear-gradient(160deg, #0088db, #00a3ff);color:#ffffff;border-radius:var(--radius);
     padding:12px 14px;box-shadow:var(--shadow);text-align:right;
   }
   .resume-icon{font-size:20px;flex:none;}
   .resume-text{display:flex;flex-direction:column;gap:3px;min-width:0;}
   .resume-title{font-weight:800;font-size:14px;}
-  .resume-sub{font-size:12px;color:#cfe3df;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .resume-sub{font-size:12px;color:#f0f8ff;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-  .grid{display:flex;flex-direction:column;gap:10px;}
+  .grid{display:flex;flex-direction:column;gap:10px;padding:0 12px;}
   .hidden{display:none !important;}
 
   .sections-scroller{
     display:flex;flex-direction:row;overflow-x:auto;
     scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
-    height:calc(100vh - 165px);
+    height:calc(100vh - 125px);
   }
   .section-panel{
     flex:0 0 100%;width:100%;box-sizing:border-box;scroll-snap-align:start;
@@ -138,27 +147,30 @@
 
   .surah-card, .juz-card{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:12px 14px;display:flex;align-items:center;gap:10px;
+    padding:12px 14px;display:flex;align-items:center;gap:12px;
     box-shadow:var(--shadow);transition:transform .15s ease, border-color .15s ease;
     text-align:right;
   }
-  .surah-card:active, .juz-card:active{transform:scale(.97);}
-  .surah-card:hover, .juz-card:hover{border-color:var(--gold);}
+  .surah-card:active, .juz-card:active{transform:scale(.98);}
+  .surah-card:hover, .juz-card:hover{border-color:var(--primary-blue);}
+  
+  /* إزالة مربع العدد وظهور الرقم بالأزرق فقط */
   .badge{
-    flex:none;width:38px;height:38px;border-radius:10px;
-    background:var(--ink);color:var(--gold-soft);
-    display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:14px;position:relative;
+    flex:none;width:auto;min-width:24px;height:auto;
+    background:none !important;border:none !important;box-shadow:none !important;
+    color:var(--primary-blue);display:inline-flex;align-items:center;
+    justify-content:center;font-weight:800;font-size:16.5px;
+    margin-left:6px;padding:0;
   }
-  .badge::before{
-    content:"";position:absolute;inset:3px;border:1px solid rgba(201,162,75,.5);border-radius:7px;
-  }
+  .badge::before{display:none !important;}
+
   .s-info{flex:1;min-width:0;}
   .s-name{display:block;font-family:'Tajawal',sans-serif;font-weight:800;font-size:16px;color:var(--text-main);}
   .s-meta{display:block;font-size:12px;color:var(--text-muted);margin-top:4px;}
   .s-range{display:block;font-size:12px;color:var(--gold);margin-top:4px;font-weight:700;}
+  
   .empty-msg, .load-msg{text-align:center;padding:40px 14px;color:var(--text-muted);font-size:14px;}
-  .load-msg .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--gold);
+  .load-msg .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--primary-blue);
     margin:0 auto 10px;animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -180,10 +192,10 @@
     font-size:18px;color:var(--text-main);background:var(--parchment-2);
     border:1px solid var(--line);
   }
-  .ab-btn:hover{border-color:var(--gold);}
+  .ab-btn:hover{border-color:var(--primary-blue);}
   .ab-btn.ab-main{
     width:54px;height:54px;font-size:20px;
-    background:var(--ink);color:var(--gold-soft);border-color:var(--ink);
+    background:var(--primary-blue);color:#ffffff;border-color:var(--primary-blue);
   }
   .ab-btn.active{background:var(--gold);color:#2b2308;border-color:var(--gold);}
 
@@ -239,8 +251,17 @@
     transition:background .15s ease, color .15s ease;display:inline-block;padding:0;
   }
   .qcf-word:hover{background:var(--parchment-2);}
-  .qcf-word.playing{background:var(--gold-soft);color:#2b2308 !important;}
-  html.night .qcf-word.playing{background:#bda255;color:#000000 !important;font-weight:bold;}
+  
+  /* تتبع الآيات شفاف تماماً ومريح للعين */
+  .qcf-word.playing{
+    background: rgba(0, 163, 255, 0.12) !important;
+    color: var(--primary-blue) !important;
+  }
+  html.night .qcf-word.playing{
+    background: rgba(0, 163, 255, 0.18) !important;
+    color: #38bdf8 !important;
+    font-weight: bold;
+  }
   .qcf-line-center .qcf-word, .qcf-header-line .qcf-word{cursor:default;}
 
   /* ---------- Settings Drawer ---------- */
@@ -268,12 +289,12 @@
   .row-between{display:flex;align-items:center;justify-content:space-between;}
   .switch{position:relative;width:44px;height:24px;background:var(--line);border-radius:99px;transition:.2s;flex:none;}
   .switch::after{content:"";position:absolute;top:2px;right:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;}
-  .switch.on{background:var(--gold);}
+  .switch.on{background:var(--primary-blue);}
   .switch.on::after{right:22px;}
   
   .dl-action-btn{
     width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);
-    background:var(--ink);color:var(--gold-soft);font-weight:700;font-size:13px;
+    background:var(--primary-blue);color:#ffffff;font-weight:700;font-size:13px;
     display:flex;align-items:center;justify-content:space-between;transition:opacity .2s;
   }
   .dl-action-btn:disabled{opacity:0.65;cursor:not-allowed;}
@@ -281,7 +302,7 @@
     height:5px;background:var(--line);border-radius:99px;margin-top:10px;overflow:hidden;display:none;
   }
   .dl-progress-bar.show{display:block;}
-  .dl-progress-fill{height:100%;width:0%;background:var(--gold);transition:width .15s linear;}
+  .dl-progress-fill{height:100%;width:0%;background:var(--primary-blue);transition:width .15s linear;}
   
   .drawer-btn{
     width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);
@@ -305,15 +326,15 @@
   .modal-body{font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-bottom:18px;}
   .modal-actions{display:flex;gap:10px;}
   .modal-btn{flex:1;padding:10px;border-radius:10px;font-size:13.5px;font-weight:700;}
-  .modal-btn.confirm{background:var(--ink);color:var(--gold-soft);border:1px solid var(--ink);}
+  .modal-btn.confirm{background:var(--primary-blue);color:#ffffff;border:1px solid var(--primary-blue);}
   .modal-btn.cancel{background:var(--parchment-2);color:var(--text-main);border:1px solid var(--line);}
 
   .toast{
     position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
-    background:var(--ink);color:#f4ead0;padding:10px 18px;border-radius:99px;
+    background:#1c2b28;color:#f4ead0;padding:10px 18px;border-radius:99px;
     font-size:13px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:88vw;text-align:center;
   }
-  ::selection{background:var(--gold-soft);}
+  ::selection{background:rgba(0, 163, 255, 0.25);}
 </style>
 </head>
 <body>
@@ -354,6 +375,7 @@
     </div>
   </main>
 
+  <!-- شريط التحكم بالصوت -->
   <div id="audioBar" class="audio-bar hidden">
     <button id="repeatBtn" class="ab-btn" title="تكرار الآية">🔁</button>
     <button id="nextBtn" class="ab-btn" title="الآية التالية">⏭</button>
@@ -424,7 +446,7 @@
 (function(){
 "use strict";
 
-/* ================= STORAGE & OFFLINE DB ================= */
+/* ================= STORAGE & MULTI-LAYER APP INVENTOR SYNC ================= */
 const memoryStore = {};
 const storage = {
   get(k){ try{ return window.localStorage.getItem(k); }catch(e){ return memoryStore[k] || null; } },
@@ -432,6 +454,17 @@ const storage = {
   remove(k){ try{ window.localStorage.removeItem(k); }catch(e){ delete memoryStore[k]; } },
   keys(){ try{ return Object.keys(window.localStorage); }catch(e){ return Object.keys(memoryStore); } }
 };
+
+function setCookie(name, val){
+  try{ document.cookie = `${name}=${encodeURIComponent(val)};max-age=315360000;path=/;SameSite=Lax`; }catch(e){}
+}
+function getCookie(name){
+  try{
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    if(match) return decodeURIComponent(match[2]);
+  }catch(e){}
+  return null;
+}
 
 const IDB_NAME = "qm_offline_db";
 const IDB_VERSION = 2;
@@ -488,6 +521,46 @@ async function idbClear(store){
       tx.onerror = ()=>rej(tx.error);
     });
   }catch(e){ return false; }
+}
+
+/* ================= PERSISTENT USER SETTINGS (App Inventor Compatible) ================= */
+function loadImmediateSettings(){
+  const r = storage.get("qm_reciter") || getCookie("qm_reciter");
+  let n = storage.get("qm_night");
+  if(n === null) n = getCookie("qm_night");
+
+  if(r && RECITERS.some(x=>x.id===r)) state.reciter = r;
+  if(n !== null) state.night = (n === "1" || n === "true");
+
+  applyTheme();
+}
+
+async function loadSavedSettings(){
+  loadImmediateSettings();
+  try {
+    const saved = await idbGet("meta", "user_settings");
+    if(saved){
+      if(saved.reciter && RECITERS.some(x=>x.id===saved.reciter)) state.reciter = saved.reciter;
+      if(saved.night !== undefined) state.night = !!saved.night;
+      applyTheme();
+    }
+  } catch(e){}
+
+  const sel = $("#reciterSelect");
+  if(sel) sel.value = state.reciter;
+  const sw = $("#nightModeToggle");
+  if(sw) sw.classList.toggle("on", state.night);
+}
+
+async function saveSettings(){
+  storage.set("qm_reciter", state.reciter);
+  storage.set("qm_night", state.night ? "1" : "0");
+  setCookie("qm_reciter", state.reciter);
+  setCookie("qm_night", state.night ? "1" : "0");
+  await idbSet("meta", "user_settings", {
+    reciter: state.reciter,
+    night: state.night
+  });
 }
 
 /* محرك التنزيل السريع المتزامن */
@@ -627,8 +700,8 @@ let state = {
   surahList:[],
   qcfIndex:null,
   qcfVerses:null,
-  reciter: storage.get("qm_reciter") || RECITERS[0].id,
-  night: storage.get("qm_night") === "1",
+  reciter: RECITERS[0].id,
+  night: false,
   currentMode: null,
   currentNumber: null,
   currentAyahs: [],
@@ -1263,9 +1336,9 @@ function populateReciterSelect(){
   const sel = $("#reciterSelect");
   sel.innerHTML = RECITERS.map(r=>`<option value="${r.id}">${r.name}</option>`).join("");
   sel.value = state.reciter;
-  sel.addEventListener("change", ()=>{
+  sel.addEventListener("change", async ()=>{
     state.reciter = sel.value;
-    storage.set("qm_reciter", state.reciter);
+    await saveSettings();
     stopAudio();
     toast("تم تغيير القارئ إلى: " + (RECITERS.find(r=>r.id===state.reciter)||{}).name);
   });
@@ -1275,11 +1348,11 @@ function initNightMode(){
   const sw = $("#nightModeToggle");
   sw.classList.toggle("on", state.night);
   applyTheme();
-  sw.addEventListener("click", ()=>{
+  sw.addEventListener("click", async ()=>{
     state.night = !state.night;
     sw.classList.toggle("on", state.night);
-    storage.set("qm_night", state.night ? "1":"0");
     applyTheme();
+    await saveSettings();
   });
 }
 
@@ -1303,7 +1376,7 @@ $("#clearCacheBtn").addEventListener("click", async ()=>{
 
 /* ================= INIT ================= */
 async function init(){
-  applyTheme();
+  await loadSavedSettings();
   await registerQcfFonts();
   populateReciterSelect();
   initNightMode();
@@ -1319,7 +1392,7 @@ async function init(){
 
 init();
 
-/* ================= INLINE SERVICE WORKER (دمج كود sw.js بالكامل بدون ملفات إضافية) ================= */
+/* ================= INLINE SERVICE WORKER ================= */
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
     const swInlineCode = `
@@ -1346,7 +1419,7 @@ if("serviceWorker" in navigator){
             return fetch(e.request).then((res) => {
               if (!res || res.status !== 200) return res;
               const resClone = res.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
+              caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone));
               return res;
             }).catch(() => cached);
           })
